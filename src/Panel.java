@@ -1,21 +1,19 @@
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 
 public class Panel extends JPanel {
-    private final int WIDTH = 600;
-    private final int HEIGHT = 600;
-    private final int UNIT_SIZE = 75;
+    private  int w = 600;
+    private  int h = 600;
+    private  int UNIT_SIZE = 75;
     private StringBuilder board;
     private Image[] whiteImages = new Image[6];
     private Image[] blackImages = new Image[6];
     Panel()
     {
-        setPreferredSize(new Dimension(WIDTH,HEIGHT));
+        setPreferredSize(new Dimension(w, h));
         board = new StringBuilder("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
         initImages();
@@ -43,6 +41,9 @@ public class Panel extends JPanel {
     }
     @Override
     protected void paintComponent(Graphics g) {
+        scaleImages();
+        calculateUnitSize();
+        updateDimensions();
         drawBoard(g);
         drawPieces(g);
     }
@@ -51,19 +52,38 @@ public class Panel extends JPanel {
     {
 
         Graphics2D g2 = (Graphics2D) g;
-        for( int i = 0; i < WIDTH;  i+= UNIT_SIZE) {
-            for (int j = 0; j < HEIGHT; j += UNIT_SIZE) {
+        for (int i = 0; i < 8; i++) { // Ensure 8 rows
+            for (int j = 0; j < 8; j++) { // Ensure 8 columns
+                int x = i * UNIT_SIZE;
+                int y = j * UNIT_SIZE;
 
-
-                if ((i / UNIT_SIZE + j / UNIT_SIZE) % 2 == 0)
+                if ((i + j) % 2 == 0)
                     g2.setPaint(new Color(210, 180, 140, 255));
                 else
                     g2.setPaint(new Color(139, 69, 19));
-                g2.fillRect(i, j, UNIT_SIZE, UNIT_SIZE);
-
+                g2.fillRect(x, y, UNIT_SIZE, UNIT_SIZE);
             }
         }
     }
+    private void calculateUnitSize()
+    {
+        UNIT_SIZE = Math.min(getWidth(), getHeight()) / 8;
+    }
+    private void updateDimensions()
+    {
+        h = getWidth();
+        w = getHeight();
+    }
+    private void scaleImages()
+    {
+        initImages();
+        for(int i = 0; i < whiteImages.length;i++)
+            whiteImages[i] = whiteImages[i].getScaledInstance(UNIT_SIZE,UNIT_SIZE, Image.SCALE_SMOOTH);
+        for(int i = 0; i < blackImages.length;i++)
+            blackImages[i] = blackImages[i].getScaledInstance(UNIT_SIZE,UNIT_SIZE, Image.SCALE_SMOOTH);
+
+        }
+
 
     private void drawPieces(Graphics g) {
         Image[] images;
@@ -74,6 +94,8 @@ public class Panel extends JPanel {
 
         while (k < board.length()) { // Use a while loop to iterate through the FEN string
             char c = board.charAt(k);
+            if(row > 8 || col >8)
+                break;
 
             if (Character.isLetter(c)) { // Check if it is a letter
                 if (Character.isUpperCase(c)) {
@@ -102,6 +124,8 @@ public class Panel extends JPanel {
                         break;
                     case 'k':
                         g2.drawImage(images[5], col * UNIT_SIZE, row * UNIT_SIZE, null);
+                        break;
+                    default:
                         break;
                 }
                 col++; // Move to the next column
