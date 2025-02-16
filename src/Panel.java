@@ -78,11 +78,20 @@ public class Panel extends JPanel {
     {
         initImages();
         for(int i = 0; i < whiteImages.length;i++)
-            whiteImages[i] = whiteImages[i].getScaledInstance(UNIT_SIZE,UNIT_SIZE, Image.SCALE_SMOOTH);
+            whiteImages[i] = scaleImage(whiteImages[i],UNIT_SIZE,UNIT_SIZE);
         for(int i = 0; i < blackImages.length;i++)
-            blackImages[i] = blackImages[i].getScaledInstance(UNIT_SIZE,UNIT_SIZE, Image.SCALE_SMOOTH);
+            blackImages[i] = scaleImage(blackImages[i],UNIT_SIZE,UNIT_SIZE);
 
-        }
+    }
+    public static Image scaleImage(Image img, int targetWidth, int targetHeight) {
+        int dpi = Toolkit.getDefaultToolkit().getScreenResolution();
+        double scaleFactor = dpi / 96.0; // Normalize based on 96 DPI
+
+        int adjustedWidth = (int) (targetWidth * scaleFactor);
+        int adjustedHeight = (int) (targetHeight * scaleFactor);
+
+        return img.getScaledInstance(adjustedWidth, adjustedHeight, Image.SCALE_SMOOTH);
+    }
 
 
     private void drawPieces(Graphics g) {
