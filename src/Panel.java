@@ -1,6 +1,7 @@
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
@@ -78,19 +79,26 @@ public class Panel extends JPanel {
     {
         initImages();
         for(int i = 0; i < whiteImages.length;i++)
-            whiteImages[i] = scaleImage(whiteImages[i],UNIT_SIZE,UNIT_SIZE);
+            whiteImages[i] = scaleImage(whiteImages[i],UNIT_SIZE,UNIT_SIZE,this);
         for(int i = 0; i < blackImages.length;i++)
-            blackImages[i] = scaleImage(blackImages[i],UNIT_SIZE,UNIT_SIZE);
+            blackImages[i] = scaleImage(blackImages[i],UNIT_SIZE,UNIT_SIZE,this);
 
     }
-    public static Image scaleImage(Image img, int targetWidth, int targetHeight) {
-        int dpi = Toolkit.getDefaultToolkit().getScreenResolution();
-        double scaleFactor = dpi / 96.0; // Normalize based on 96 DPI
+    private Image scaleImage(Image img, int targetWidth, int targetHeight, Component component) {
+        GraphicsConfiguration gfxConfig = component.getGraphicsConfiguration();
+        double scaleFactor = gfxConfig.getDefaultTransform().getScaleX(); // Get macOS scaling factor
 
         int adjustedWidth = (int) (targetWidth * scaleFactor);
         int adjustedHeight = (int) (targetHeight * scaleFactor);
 
-        return img.getScaledInstance(adjustedWidth, adjustedHeight, Image.SCALE_SMOOTH);
+        BufferedImage scaledImage = new BufferedImage(adjustedWidth, adjustedHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = scaledImage.createGraphics();
+
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g2d.drawImage(img, 0, 0, adjustedWidth, adjustedHeight, null);
+        g2d.dispose();
+
+        return scaledImage;
     }
 
 
