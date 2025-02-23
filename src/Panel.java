@@ -18,6 +18,7 @@ public class Panel extends JPanel {
     private final Image[] originalBlackImages = new Image[6];
     private final double scalingFactor;
     private Piece[][] board = new Piece[8][8];
+    BoardMouseListener bm;
 
     public Panel() {
         GraphicsConfiguration gc = getGraphicsConfiguration();
@@ -25,7 +26,9 @@ public class Panel extends JPanel {
         setPreferredSize(new Dimension(600, 600));
         fenString = new StringBuilder("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         board = fenToArray(fenString);
-        addMouseListener(new BoardMouseListener());
+        bm = new BoardMouseListener();
+        addMouseListener(bm);
+        addMouseMotionListener(bm);
         initImages();
         scaleImages();
     }
@@ -67,7 +70,7 @@ public class Panel extends JPanel {
         calculateUnitSize();
         scaleImages();
         drawBoard(g2d);
-        drawPieces(g2d);
+        bm.drawPieces(g2d);
         g2d.dispose();
     }
 
@@ -111,28 +114,7 @@ public class Panel extends JPanel {
     }
 
 
-    private void drawPieces(Graphics2D g2) {
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
 
-                Piece piece = board[row][col];
-
-
-                if (piece == null) continue;
-
-
-                Image pieceImage = (piece.getColor() == PieceColor.WHITE)
-                        ? whiteImages[piece.IMAGEINDEX]
-                        : blackImages[piece.IMAGEINDEX];
-
-                int x = col * unitSize;
-                int y = row * unitSize;
-
-
-                g2.drawImage(pieceImage, x, y, unitSize, unitSize, null);
-            }
-        }
-    }
     private void drawImage(Graphics2D g2, Image image, int col, int row) {
         int x = col * unitSize;
         int y = row * unitSize;
@@ -180,7 +162,7 @@ public class Panel extends JPanel {
                 case 'b' -> ans[row][col] = new Bishop(col,row,PieceColor.BLACK);
                 case 'q' -> ans[row][col] = new Queen(col,row,PieceColor.BLACK);
                 case 'k' -> ans[row][col] = new King(col,row,PieceColor.BLACK);
-                case 'P' -> ans[row][col] = new Pawn(col,row,PieceColor.WHITE);
+                case 'P' -> ans[row][col] = new Pawn(col,row ,PieceColor.WHITE);
                 case 'R' -> ans[row][col] = new Rook(col,row,PieceColor.WHITE);
                 case 'N' -> ans[row][col] = new Knight(col,row,PieceColor.WHITE);
                 case 'B' -> ans[row][col] = new Bishop(col,row,PieceColor.WHITE);
@@ -194,28 +176,31 @@ public class Panel extends JPanel {
     }
 
     private class BoardMouseListener extends MouseAdapter {
-        Piece selectedPiece;
+        private Piece selectedPiece;
+        private int originalRow, originalCol;
+        private int dragOffsetX, dragOffsetY;
+        private int currentMouseX, currentMouseY;
+
         @Override
         public void mousePressed(MouseEvent e) {
-            // Calculate clicked square
-            int col = (e.getX())  / unitSize;
-            int row = (e.getY()) /  unitSize;
-            selectedPiece = board[row][col];
-            System.out.print((char)(65 + col));
-            System.out.println(8 - row);
-            if (selectedPiece != null) {
-                // Calculate offset from piece's top-left corner
-              int dragOffsetX = e.getX() - (col * unitSize);
-              int dragOffsetY = e.getY() - (row * unitSize);
+            // Convert to scaled coordinates
+            int x = (int) (e.getX() / scalingFactor);
+            int y = (int) (e.getY() / scalingFactor);
 
-            }
+            int col = x / unitSize;
+            int row = y / unitSize;
+
+            selectedPiece = board[row][col];
 
 
         }
+
         @Override
         public void mouseDragged(MouseEvent e) {
             if (selectedPiece != null) {
-                selectedPiece.move(e.getX(),e.getY());
+                // Update current mouse position (scaled coordinates)
+                currentMouseX = (int) (e.getX() / scalingFactor);
+                currentMouseY = (int) (e.getY() / scalingFactor);
                 repaint();
             }
         }
@@ -223,25 +208,61 @@ public class Panel extends JPanel {
         @Override
         public void mouseReleased(MouseEvent e) {
             if (selectedPiece != null) {
-                int targetCol = e.getX() / unitSize;
-                int targetRow = e.getY() / unitSize;
+                // Convert to scaled coordinates and calculate target position
+                int x = (int) (e.getX() / scalingFactor);
+                int y = (int) (e.getY() / scalingFactor);
 
-                // Validate move (simplified example)
-                if (true) {
-                    // Remove from old position
-                    board[selectedPiece.x][selectedPiece.y] = null;
-                    // Update piece's position
-                    selectedPiece.move(targetCol,targetRow);
-                    // Place in new position
+                int targetCol = x / unitSize;
+                int targetRow = y / unitSize;
+
+                // Validate move using piece's movement rules
+                if (targetRow >= 0 && targetRow < 8 &&
+                        targetCol >= 0 && targetCol < 8 &&
+                        selectedPiece.isValidMove(targetRow, targetCol, board)) {
+
+                    // Handle captures
+                    Piece targetPiece = board[targetRow][targetCol];
+                    if (targetPiece != null && targetPiece.getColor() != selectedPiece.getColor()) {
+                        board[targetRow][targetCol] = null;
+                    }
+
+                    // Update board state
+                    board[originalRow][originalCol] = null;
+                    selectedPiece.move(targetCol, targetRow);
                     board[targetRow][targetCol] = selectedPiece;
                 }
 
+                // Reset selection
                 selectedPiece = null;
                 repaint();
             }
         }
+        private void drawPieces(Graphics2D g2) {
+            // Draw all non-selected pieces
+            for (int row = 0; row < 8; row++) {
+                for (int col = 0; col < 8; col++) {
+                    Piece piece = board[row][col];
+                    if (piece == null || piece == selectedPiece) continue;
 
+                    Image pieceImage = (piece.getColor() == PieceColor.WHITE)
+                            ? whiteImages[piece.IMAGEINDEX]
+                            : blackImages[piece.IMAGEINDEX];
+                    int x = col * unitSize;
+                    int y = row * unitSize;
+                    g2.drawImage(pieceImage, x, y, unitSize, unitSize, null);
+                }
+            }
 
+            // Draw dragged piece on top (once)
+            if (selectedPiece != null) {
+                Image pieceImage = (selectedPiece.getColor() == PieceColor.WHITE)
+                        ? whiteImages[selectedPiece.IMAGEINDEX]
+                        : blackImages[selectedPiece.IMAGEINDEX];
+                int x = currentMouseX - dragOffsetX - unitSize / 2;
+                int y = currentMouseY - dragOffsetY - unitSize / 2;
+                g2.drawImage(pieceImage, x, y, unitSize, unitSize, null);
+            }
+        }
     }
 }
 
