@@ -183,6 +183,7 @@ public class Panel extends JPanel {
 
         @Override
         public void mousePressed(MouseEvent e) {
+
             // Convert to scaled coordinates
             int x = (int) (e.getX() / scalingFactor);
             int y = (int) (e.getY() / scalingFactor);
@@ -191,6 +192,12 @@ public class Panel extends JPanel {
             int row = y / unitSize;
 
             selectedPiece = board[row][col];
+            if (selectedPiece != null) {
+                // Update current mouse position (scaled coordinates)
+                currentMouseX = (int) (e.getX() / scalingFactor);
+                currentMouseY = (int) (e.getY() / scalingFactor);
+                repaint();
+            }
 
 
         }
