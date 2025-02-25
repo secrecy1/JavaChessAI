@@ -183,65 +183,73 @@ public class Panel extends JPanel {
 
         @Override
         public void mousePressed(MouseEvent e) {
+            if(e.getButton() == MouseEvent.BUTTON1)
+            {
+                // Convert to scaled coordinates
+                int x = (int) (e.getX() / scalingFactor);
+                int y = (int) (e.getY() / scalingFactor);
 
-            // Convert to scaled coordinates
-            int x = (int) (e.getX() / scalingFactor);
-            int y = (int) (e.getY() / scalingFactor);
+                int col = x / unitSize;
+                int row = y / unitSize;
 
-            int col = x / unitSize;
-            int row = y / unitSize;
-
-            selectedPiece = board[row][col];
-            if (selectedPiece != null) {
-                // Update current mouse position (scaled coordinates)
-                currentMouseX = (int) (e.getX() / scalingFactor);
-                currentMouseY = (int) (e.getY() / scalingFactor);
-                repaint();
+                selectedPiece = board[row][col];
+                if (selectedPiece != null) {
+                    // track original position
+                    originalRow = row;
+                    originalCol = col;
+                    // Update current mouse position (scaled coordinates)
+                    currentMouseX = (int) (e.getX() / scalingFactor);
+                    currentMouseY = (int) (e.getY() / scalingFactor);
+                    repaint();
+                }
             }
-
 
         }
 
         @Override
         public void mouseDragged(MouseEvent e) {
-            if (selectedPiece != null) {
-                // Update current mouse position (scaled coordinates)
-                currentMouseX = (int) (e.getX() / scalingFactor);
-                currentMouseY = (int) (e.getY() / scalingFactor);
-                repaint();
-            }
+
+                if (selectedPiece != null) {
+                    // Update current mouse position (scaled coordinates)
+                    currentMouseX = (int) (e.getX() / scalingFactor);
+                    currentMouseY = (int) (e.getY() / scalingFactor);
+                    repaint();
+                }
+
         }
 
         @Override
         public void mouseReleased(MouseEvent e) {
-            if (selectedPiece != null) {
-                // Convert to scaled coordinates and calculate target position
-                int x = (int) (e.getX() / scalingFactor);
-                int y = (int) (e.getY() / scalingFactor);
+            if(e.getButton() == MouseEvent.BUTTON1) {
+                if (selectedPiece != null) {
+                    // Convert to scaled coordinates and calculate target position
+                    int x = (int) (e.getX() / scalingFactor);
+                    int y = (int) (e.getY() / scalingFactor);
 
-                int targetCol = x / unitSize;
-                int targetRow = y / unitSize;
+                    int targetCol = x / unitSize;
+                    int targetRow = y / unitSize;
 
-                // Validate move using piece's movement rules
-                if (targetRow >= 0 && targetRow < 8 &&
-                        targetCol >= 0 && targetCol < 8 &&
-                        selectedPiece.isValidMove(targetRow, targetCol, board)) {
+                    // Validate move using piece's movement rules
+                    if (targetRow >= 0 && targetRow < 8 &&
+                            targetCol >= 0 && targetCol < 8 &&
+                            !(selectedPiece.isValidMove(targetRow, targetCol, board))) {
 
-                    // Handle captures
-                    Piece targetPiece = board[targetRow][targetCol];
-                    if (targetPiece != null && targetPiece.getColor() != selectedPiece.getColor()) {
-                        board[targetRow][targetCol] = null;
+                        // Handle captures
+                        Piece targetPiece = board[targetRow][targetCol];
+                        if (targetPiece != null && targetPiece.getColor() != selectedPiece.getColor()) {
+                            board[targetRow][targetCol] = null;
+                        }
+
+                        // Update board state
+                        board[originalRow][originalCol] = null;
+                        selectedPiece.move(targetCol, targetRow);
+                        board[targetRow][targetCol] = selectedPiece;
                     }
 
-                    // Update board state
-                    board[originalRow][originalCol] = null;
-                    selectedPiece.move(targetCol, targetRow);
-                    board[targetRow][targetCol] = selectedPiece;
+                    // Reset selection
+                    selectedPiece = null;
+                    repaint();
                 }
-
-                // Reset selection
-                selectedPiece = null;
-                repaint();
             }
         }
         private void drawPieces(Graphics2D g2) {
