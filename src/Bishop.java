@@ -8,7 +8,7 @@ public class Bishop extends Piece {
     public boolean isValidMove(int newX, int newY, Piece[][] board)
     {
         // check diagonals
-        if(newX - x ==  y - newY )
+        if(newX - x ==  y - newY || newX + x ==  y + newY)
             return true;
         return false;
     }
