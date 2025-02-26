@@ -69,24 +69,12 @@ public class Panel extends JPanel {
 
         calculateUnitSize();
         scaleImages();
-        drawBoard(g2d);
+        bm.drawBoard(g2d);
         bm.drawPieces(g2d);
         g2d.dispose();
     }
 
-    private void drawBoard(Graphics2D g2) {
-        for (int row = 0; row < BOARD_SIZE; row++) {
-            for (int col = 0; col < BOARD_SIZE; col++) {
-                int x = col * unitSize;
-                int y = row * unitSize;
 
-                g2.setColor((row + col) % 2 == 0 ?
-                        new Color(210, 180, 140) :
-                        new Color(139, 69, 19));
-                g2.fillRect(x, y, unitSize, unitSize);
-            }
-        }
-    }
 
     private void calculateUnitSize() {
         int size = Math.min(getWidth(), getHeight());
@@ -231,8 +219,9 @@ public class Panel extends JPanel {
 
                     // Validate move using piece's movement rules
                     if (targetRow >= 0 && targetRow < 8 &&
-                            targetCol >= 0 && targetCol < 8 &&
-                            !(selectedPiece.isValidMove(targetRow, targetCol, board))) {
+                            targetCol >= 0 && targetCol < 8
+                           // !(selectedPiece.isValidMove(targetRow, targetCol, board))
+                    ) {
 
                         // Handle captures
                         Piece targetPiece = board[targetRow][targetCol];
@@ -276,6 +265,26 @@ public class Panel extends JPanel {
                 int x = currentMouseX - dragOffsetX - unitSize / 2;
                 int y = currentMouseY - dragOffsetY - unitSize / 2;
                 g2.drawImage(pieceImage, x, y, unitSize, unitSize, null);
+            }
+        }
+        private void drawBoard(Graphics2D g2) {
+            for (int row = 0; row < BOARD_SIZE; row++) {
+                for (int col = 0; col < BOARD_SIZE; col++) {
+                    int x = col * unitSize;
+                    int y = row * unitSize;
+
+                    g2.setColor((row + col) % 2 == 0 ?
+                            new Color(210, 180, 140) :
+                            new Color(139, 69, 19));
+                    if(selectedPiece != null && selectedPiece.isValidMove(row,col,board))
+                        g2.setColor(new Color(255, 0, 0));
+
+                    g2.fillRect(x, y, unitSize, unitSize);
+
+
+
+                }
+
             }
         }
     }
