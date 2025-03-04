@@ -7,11 +7,20 @@ public class Knight extends Piece{
     @Override
     public boolean isValidMove(int newX, int newY, Piece[][] board)
     {
+        System.out.println(x);
+        System.out.println(y);
+      int dx = newX - x;
+      int  dy = newY - y;
+      if(dx == 0 || dy == 0)
+          return false;
+        if((Math.abs(dy) == 2 && Math.abs(dx) == 1) || (Math.abs(dy) == 1 && Math.abs(dx) == 2))
+        {
+            return board[newY][newX] == null || board[newY][newX].pieceColor != this.pieceColor;
+        }
         return false;
     }
     @Override
     public void move(int newX, int newY) {
-        // Update x/y in base class
-        super.move(x,y);
+        super.move(newX, newY);
     }
 }

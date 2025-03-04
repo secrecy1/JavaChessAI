@@ -11,7 +11,6 @@ public class King extends Piece {
     }
     @Override
     public void move(int newX, int newY) {
-        // Update x/y in base class
-        super.move(x,y);
+        super.move(newX, newY);
     }
 }

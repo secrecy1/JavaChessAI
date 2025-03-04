@@ -219,8 +219,8 @@ public class Panel extends JPanel {
 
                     // Validate move using piece's movement rules
                     if (targetRow >= 0 && targetRow < 8 &&
-                            targetCol >= 0 && targetCol < 8
-                           // !(selectedPiece.isValidMove(targetRow, targetCol, board))
+                            targetCol >= 0 && targetCol < 8 &&
+                           (selectedPiece.isValidMove(targetCol, targetRow, board))
                     ) {
 
                         // Handle captures
@@ -276,7 +276,7 @@ public class Panel extends JPanel {
                     g2.setColor((row + col) % 2 == 0 ?
                             new Color(210, 180, 140) :
                             new Color(139, 69, 19));
-                    if(selectedPiece != null && selectedPiece.isValidMove(row,col,board))
+                    if(selectedPiece != null && selectedPiece.isValidMove(col,row,board))
                         g2.setColor(new Color(255, 0, 0));
 
                     g2.fillRect(x, y, unitSize, unitSize);
