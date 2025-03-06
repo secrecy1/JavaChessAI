@@ -16,11 +16,13 @@ public class Panel extends JPanel {
     private final Image[] blackImages = new Image[6];
     private final Image[] originalWhiteImages = new Image[6];
     private final Image[] originalBlackImages = new Image[6];
+    private boolean backwards;
     private final double scalingFactor;
     private Piece[][] board = new Piece[8][8];
     BoardMouseListener bm;
 
     public Panel() {
+        backwards = false;
         GraphicsConfiguration gc = getGraphicsConfiguration();
         scalingFactor = gc != null ? gc.getDefaultTransform().getScaleX() : 1.0;
         setPreferredSize(new Dimension(600, 600));
@@ -64,13 +66,19 @@ public class Panel extends JPanel {
         g2d.scale(scalingFactor, scalingFactor);
 
         // Set quality rendering hints
+       // int x = this.getWidth() / 2;
+       // int y = this.getHeight() / 2;
+       // g2d.rotate(Math.toRadians(180.0), x, y);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 
         calculateUnitSize();
         scaleImages();
         bm.drawBoard(g2d);
-        bm.drawPieces(g2d);
+        if(backwards)
+            bm.drawBackwards(g2d);
+        else bm.drawPieces(g2d);
+
         g2d.dispose();
     }
 
@@ -176,9 +184,11 @@ public class Panel extends JPanel {
                 // Convert to scaled coordinates
                 int x = (int) (e.getX() / scalingFactor);
                 int y = (int) (e.getY() / scalingFactor);
-
+                int row;
                 int col = x / unitSize;
-                int row = y / unitSize;
+                    row = y / unitSize;
+                if(backwards)
+                    row = 7 - y / unitSize;
 
                 selectedPiece = board[row][col];
                 if (selectedPiece != null) {
@@ -213,9 +223,11 @@ public class Panel extends JPanel {
                     // Convert to scaled coordinates and calculate target position
                     int x = (int) (e.getX() / scalingFactor);
                     int y = (int) (e.getY() / scalingFactor);
-
-                    int targetCol = x / unitSize;
-                    int targetRow = y / unitSize;
+                    int targetRow;
+                    int targetCol =  x / unitSize;
+                    targetRow =  y / unitSize;
+                    if(backwards)
+                        targetRow = 7 - y / unitSize;
 
                     // Validate move using piece's movement rules
                     if (targetRow >= 0 && targetRow < 8 &&
@@ -257,6 +269,35 @@ public class Panel extends JPanel {
                 }
             }
 
+
+            // Draw dragged piece on top (once)
+            if (selectedPiece != null) {
+                Image pieceImage = (selectedPiece.getColor() == PieceColor.WHITE)
+                        ? whiteImages[selectedPiece.IMAGEINDEX]
+                        : blackImages[selectedPiece.IMAGEINDEX];
+                int x = currentMouseX - dragOffsetX - unitSize / 2;
+                int y = currentMouseY - dragOffsetY - unitSize / 2;
+                g2.drawImage(pieceImage, x, y, unitSize, unitSize, null);
+            }
+        }
+        private void drawBackwards(Graphics2D g2)
+        {
+            // Draw all non-selected pieces
+            for (int row = 0; row < 8; row++) {
+                for (int col = 0; col < 8; col++) {
+                    Piece piece = board[row][col];
+                    if (piece == null || piece == selectedPiece) continue;
+
+                    Image pieceImage = (piece.getColor() == PieceColor.WHITE)
+                            ? whiteImages[piece.IMAGEINDEX]
+                            : blackImages[piece.IMAGEINDEX];
+                    int x = col * unitSize;
+                    int y =  unitSize * 7 - row * unitSize;
+                    g2.drawImage(pieceImage, x, y, unitSize, unitSize, null);
+                }
+            }
+
+
             // Draw dragged piece on top (once)
             if (selectedPiece != null) {
                 Image pieceImage = (selectedPiece.getColor() == PieceColor.WHITE)
@@ -276,6 +317,8 @@ public class Panel extends JPanel {
                     g2.setColor((row + col) % 2 == 0 ?
                             new Color(210, 180, 140) :
                             new Color(139, 69, 19));
+                    if(backwards)
+                        row = 7 - row;
                     if(selectedPiece != null && selectedPiece.isValidMove(col,row,board))
                         g2.setColor(new Color(255, 0, 0));
 
