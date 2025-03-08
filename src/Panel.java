@@ -22,7 +22,7 @@ public class Panel extends JPanel {
     BoardMouseListener bm;
 
     public Panel() {
-        backwards = false;
+        backwards = true;
         GraphicsConfiguration gc = getGraphicsConfiguration();
         scalingFactor = gc != null ? gc.getDefaultTransform().getScaleX() : 1.0;
         setPreferredSize(new Dimension(600, 600));
