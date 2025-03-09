@@ -9,22 +9,23 @@ public class Pawn extends Piece {
     @Override
     public boolean isValidMove(int newX, int newY, Piece[][] board)
     {
-        // TODO: add en passant
-        if(y - 1 < 0)
+        // TODO: add en passant and becomming a queen
+        int incr = (pieceColor == PieceColor.WHITE) ? 1: -1;
+        if(y - 1 < 0 || y + 1 > 7)
             return false;
-       else if(newY < y && newX == x)
+       else if((newY ==y - incr || newY == y - incr * 2) && newX == x)
         {
-            if (board[y - 1][x] != null)
+            if (board[y - incr][x] != null)
                 return false;
-            else if (newY == y - 1 || !(hasMoved) && newY == y - 2) {
+            else if (newY == y - incr || !(hasMoved) && newY == y - incr * 2) {
                 return true;
             }
         }
-        else if(newY == y - 1)
+        else if(newY == y - incr)
         {
-            if(newX == x - 1)
+            if(board[newY][newX] !=null && newX == x - incr && board[newY][newX].pieceColor != this.pieceColor)
                 return true;
-            else if(newX == x + 1)
+            else if(board[newY][newX] !=null && newX == x + incr && board[newY][newX].pieceColor != this.pieceColor)
                 return true;
         }
 
