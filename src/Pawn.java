@@ -7,32 +7,44 @@ public class Pawn extends Piece {
 
     }
     @Override
-    public boolean isValidMove(int newX, int newY, Piece[][] board)
-    {
-        // TODO: add en passant and becomming a queen
-        int incr = (pieceColor == PieceColor.WHITE) ? 1: -1;
-        if(y - 1 < 0 || y + 1 > 7)
+    public boolean isValidMove(int newX, int newY, Piece[][] board) {
+        int incr = (pieceColor == PieceColor.WHITE) ? 1 : -1;
+
+        // Check if new position is within the board bounds
+        if (newX < 0 || newX > 7 || newY < 0 || newY > 7) {
             return false;
-       else if((newY ==y - incr || newY == y - incr * 2) && newX == x)
-        {
-            if (board[y - incr][x] != null)
+        }
+
+        // Moving straight forward
+        if (newX == x) {
+            // Check for one step move
+            if (newY == y - incr) {
+                return board[newY][x] == null;
+            }
+            // Check for two steps move (only if not moved yet)
+            else if (newY == y - 2 * incr && !hasMoved) {
+                int intermediateY = y - incr;
+                return board[newY][x] == null && board[intermediateY][x] == null;
+            } else {
                 return false;
-            else if (newY == y - incr || !(hasMoved) && newY == y - incr * 2) {
-                return true;
             }
         }
-        else if(newY == y - incr)
-        {
-            if(board[newY][newX] !=null && newX == x - incr && board[newY][newX].pieceColor != this.pieceColor)
+        // Diagonal capture (including en passant later)
+        else if (Math.abs(newX - x) == 1 && newY == y - incr) {
+            // Check if target square has an enemy piece
+            Piece targetPiece = board[newY][newX];
+            if (targetPiece != null && targetPiece.pieceColor != this.pieceColor) {
                 return true;
-            else if(board[newY][newX] !=null && newX == x + incr && board[newY][newX].pieceColor != this.pieceColor)
-                return true;
+            }
+            // TODO: Add en passant logic here
+            else {
+                return false;
+            }
         }
-
-
-
-
-        return false;
+        // All other cases are invalid
+        else {
+            return false;
+        }
     }
     @Override
     public void move(int newX, int newY) {

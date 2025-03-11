@@ -18,7 +18,7 @@ public class Panel extends JPanel {
     private final Image[] originalBlackImages = new Image[6];
     private boolean backwards;
     private final double scalingFactor;
-    private Piece[][] board = new Piece[8][8];
+    private Piece[][] board;
     BoardMouseListener bm;
 
     public Panel() {
@@ -314,13 +314,15 @@ public class Panel extends JPanel {
                     int x = col * unitSize;
                     int y = row * unitSize;
 
-                    g2.setColor((row + col) % 2 == 0 ?
+                   Color color = (row + col) % 2 == 0 ?
                             new Color(210, 180, 140) :
-                            new Color(139, 69, 19));
+                            new Color(139, 69, 19);
+                   g2.setColor(color);
                     if(backwards)
                         row = 7 - row;
                     if(selectedPiece != null && selectedPiece.isValidMove(col,row,board))
-                        g2.setColor(new Color(255, 0, 0));
+                        g2.setColor(new Color(255, 255, 255));
+
 
                     g2.fillRect(x, y, unitSize, unitSize);
 

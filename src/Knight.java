@@ -7,8 +7,7 @@ public class Knight extends Piece{
     @Override
     public boolean isValidMove(int newX, int newY, Piece[][] board)
     {
-        System.out.println(x);
-        System.out.println(y);
+
       int dx = newX - x;
       int  dy = newY - y;
       if(dx == 0 || dy == 0)
