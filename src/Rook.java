@@ -1,4 +1,5 @@
 public class Rook extends Piece {
+	public boolean hasMoved = false;
     public Rook(int x, int y, PieceColor pieceColor) {
         super(x, y, pieceColor, 1); // Rook has a value of 5
     }
@@ -48,5 +49,14 @@ public class Rook extends Piece {
     @Override
     public void move(int newX, int newY) {
         super.move(newX, newY);
+    }
+    @Override
+    public char getFenSymbol()
+    {
+        return pieceColor == PieceColor.WHITE ? 'R': 'r';
+    }
+    public Piece copy()
+    {
+        return new Rook(this.x, this.y, this.pieceColor);
     }
 }

@@ -1,5 +1,5 @@
 import javax.imageio.ImageIO;
-import javax.swing.JPanel;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -11,28 +11,41 @@ import java.util.Arrays;
 public class Panel extends JPanel {
     private static final int BOARD_SIZE = 8;
     private int unitSize = 75;
-    private StringBuilder fenString;
+    private String fenString;
     private final Image[] whiteImages = new Image[6];
     private final Image[] blackImages = new Image[6];
     private final Image[] originalWhiteImages = new Image[6];
     private final Image[] originalBlackImages = new Image[6];
-    private boolean backwards;
-    private final double scalingFactor;
-    private Piece[][] board;
-    BoardMouseListener bm;
 
+    private final double scalingFactor;
+    BoardMouseListener bm;
+    GameState gameState;
+    boolean gameOverScreen;
+    Thread gameLoop;
     public Panel() {
-        backwards = true;
+
         GraphicsConfiguration gc = getGraphicsConfiguration();
         scalingFactor = gc != null ? gc.getDefaultTransform().getScaleX() : 1.0;
         setPreferredSize(new Dimension(600, 600));
-        fenString = new StringBuilder("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        board = fenToArray(fenString);
+        fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        gameState = new GameState(fenString);
+        gameState.turnColor = PieceColor.WHITE;
+        setLayout(null);
+
+       // gameOverPanel.setPreferredSize(new Dimension(unitSize*2,unitSize*2));
+
         bm = new BoardMouseListener();
         addMouseListener(bm);
         addMouseMotionListener(bm);
         initImages();
         scaleImages();
+
+        gameLoop = new Thread(new GameLoop());
+        gameLoop.start();
+
+        gameOverScreen = false;
+
+
     }
 
     private void initImages() {
@@ -59,26 +72,27 @@ public class Panel extends JPanel {
 
     @Override
     protected void paintComponent(Graphics g) {
+
         super.paintComponent(g);
+
+
         Graphics2D g2d = (Graphics2D) g.create();
 
         // Apply high-DPI scaling
         g2d.scale(scalingFactor, scalingFactor);
 
-        // Set quality rendering hints
-       // int x = this.getWidth() / 2;
-       // int y = this.getHeight() / 2;
-       // g2d.rotate(Math.toRadians(180.0), x, y);
+
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 
         calculateUnitSize();
         scaleImages();
         bm.drawBoard(g2d);
-        if(backwards)
+        if(gameState.backwards)
             bm.drawBackwards(g2d);
         else bm.drawPieces(g2d);
-
+        if(gameState.gameOver)
+            bm.drawGameOverScreen(g2d);
         g2d.dispose();
     }
 
@@ -117,148 +131,70 @@ public class Panel extends JPanel {
         g2.drawImage(image, x, y, null);
     }
 
-    public static Piece[][] fenToArray(StringBuilder s) {
-        Piece[][] ans = new Piece[8][8];
-        int col = 0;
-        int row = 0;
 
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-
-            // Stop parsing if we've filled all 8 rows
-            if (row >= 8) break;
-
-            if (Character.isDigit(c)) {
-                // Handle empty squares
-                int num = Character.getNumericValue(c);
-                int end = Math.min(col + num, 8); // Prevent overflow
-                Arrays.fill(ans[row], col, end, null);
-                col = end;
-                continue; // Skip rest of loop iteration
-            } else if (c == '/') {
-                // Move to next row
-                row++;
-                col = 0;
-                continue; // Skip rest of loop iteration
-            }
-
-            // Only process valid piece characters here
-            if (col >= 8) {
-                // Wrap to next row if current is full
-                row++;
-                col = 0;
-                if (row >= 8) break; // Final row check
-            }
-
-
-            switch (c) {
-                case 'p' -> ans[row][col] = new Pawn(col,row,PieceColor.BLACK);
-                case 'r' -> ans[row][col] = new Rook(col,row,PieceColor.BLACK);
-                case 'n' -> ans[row][col] = new Knight(col,row,PieceColor.BLACK);
-                case 'b' -> ans[row][col] = new Bishop(col,row,PieceColor.BLACK);
-                case 'q' -> ans[row][col] = new Queen(col,row,PieceColor.BLACK);
-                case 'k' -> ans[row][col] = new King(col,row,PieceColor.BLACK);
-                case 'P' -> ans[row][col] = new Pawn(col,row ,PieceColor.WHITE);
-                case 'R' -> ans[row][col] = new Rook(col,row,PieceColor.WHITE);
-                case 'N' -> ans[row][col] = new Knight(col,row,PieceColor.WHITE);
-                case 'B' -> ans[row][col] = new Bishop(col,row,PieceColor.WHITE);
-                case 'Q' -> ans[row][col] = new Queen(col,row,PieceColor.WHITE);
-                case 'K' -> ans[row][col] = new King(col,row,PieceColor.WHITE);
-            }
-            col++;
-        }
-
-        return ans;
-    }
 
     private class BoardMouseListener extends MouseAdapter {
-        private Piece selectedPiece;
-        private int originalRow, originalCol;
-        private int dragOffsetX, dragOffsetY;
-        private int currentMouseX, currentMouseY;
-
         @Override
-        public void mousePressed(MouseEvent e) {
-            if(e.getButton() == MouseEvent.BUTTON1)
+        public void mousePressed(MouseEvent e)
+        {
+            if(gameState.gameOver)
             {
-                // Convert to scaled coordinates
-                int x = (int) (e.getX() / scalingFactor);
-                int y = (int) (e.getY() / scalingFactor);
-                int row;
-                int col = x / unitSize;
-                    row = y / unitSize;
-                if(backwards)
-                    row = 7 - y / unitSize;
+                gameOverScreen = true;
+                removeMouseListener(bm);
+                removeMouseListener(bm);
+                repaint();
 
-                selectedPiece = board[row][col];
-                if (selectedPiece != null) {
-                    // track original position
-                    originalRow = row;
-                    originalCol = col;
-                    // Update current mouse position (scaled coordinates)
-                    currentMouseX = (int) (e.getX() / scalingFactor);
-                    currentMouseY = (int) (e.getY() / scalingFactor);
-                    repaint();
-                }
+                
             }
+           else if(e.getButton() == MouseEvent.BUTTON1 && !gameState.gameOver)
+            {
+                gameState.selectPiece(e, unitSize, scalingFactor);
+                repaint();
+            }
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent e)
+        {
+            if(gameState.gameOver)
+            {
+                gameOverScreen = true;
+                removeMouseListener(bm);
+                removeMouseListener(bm);
+                repaint();
+            }
+           else {
+                gameState.dragPiece(e, scalingFactor);
+            }
+                repaint();
 
         }
 
         @Override
-        public void mouseDragged(MouseEvent e) {
+        public void mouseReleased(MouseEvent e)
+        {
+            if(gameState.gameOver)
+            {
+                gameOverScreen = true;
+                removeMouseListener(bm);
+                removeMouseListener(bm);
+                repaint();
 
-                if (selectedPiece != null) {
-                    // Update current mouse position (scaled coordinates)
-                    currentMouseX = (int) (e.getX() / scalingFactor);
-                    currentMouseY = (int) (e.getY() / scalingFactor);
-                    repaint();
-                }
-
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-            if(e.getButton() == MouseEvent.BUTTON1) {
-                if (selectedPiece != null) {
-                    // Convert to scaled coordinates and calculate target position
-                    int x = (int) (e.getX() / scalingFactor);
-                    int y = (int) (e.getY() / scalingFactor);
-                    int targetRow;
-                    int targetCol =  x / unitSize;
-                    targetRow =  y / unitSize;
-                    if(backwards)
-                        targetRow = 7 - y / unitSize;
-
-                    // Validate move using piece's movement rules
-                    if (targetRow >= 0 && targetRow < 8 &&
-                            targetCol >= 0 && targetCol < 8 &&
-                           (selectedPiece.isValidMove(targetCol, targetRow, board))
-                    ) {
-
-                        // Handle captures
-                        Piece targetPiece = board[targetRow][targetCol];
-                        if (targetPiece != null && targetPiece.getColor() != selectedPiece.getColor()) {
-                            board[targetRow][targetCol] = null;
-                        }
-
-                        // Update board state
-                        board[originalRow][originalCol] = null;
-                        selectedPiece.move(targetCol, targetRow);
-                        board[targetRow][targetCol] = selectedPiece;
-                    }
-
-                    // Reset selection
-                    selectedPiece = null;
-                    repaint();
-                }
             }
+           else if(e.getButton() == MouseEvent.BUTTON1 && !gameState.gameOver)
+            {
+                gameState.releasePiece(e,unitSize,scalingFactor);
+                repaint();
+            }
+           repaint();
         }
-        private void drawPieces(Graphics2D g2) {
+        private void drawPieces(Graphics2D g2)
+        {
             // Draw all non-selected pieces
             for (int row = 0; row < 8; row++) {
                 for (int col = 0; col < 8; col++) {
-                    Piece piece = board[row][col];
-                    if (piece == null || piece == selectedPiece) continue;
+                    Piece piece = gameState.board[row][col];
+                    if (piece == null || piece == gameState.selectedPiece) continue;
 
                     Image pieceImage = (piece.getColor() == PieceColor.WHITE)
                             ? whiteImages[piece.IMAGEINDEX]
@@ -271,12 +207,13 @@ public class Panel extends JPanel {
 
 
             // Draw dragged piece on top (once)
-            if (selectedPiece != null) {
-                Image pieceImage = (selectedPiece.getColor() == PieceColor.WHITE)
-                        ? whiteImages[selectedPiece.IMAGEINDEX]
-                        : blackImages[selectedPiece.IMAGEINDEX];
-                int x = currentMouseX - dragOffsetX - unitSize / 2;
-                int y = currentMouseY - dragOffsetY - unitSize / 2;
+            if (gameState.selectedPiece != null)
+            {
+                Image pieceImage = (gameState.selectedPiece.getColor() == PieceColor.WHITE)
+                        ? whiteImages[gameState.selectedPiece.IMAGEINDEX]
+                        : blackImages[gameState.selectedPiece.IMAGEINDEX];
+                int x = gameState.currentMouseX - unitSize / 2;
+                int y = gameState.currentMouseY - unitSize / 2;
                 g2.drawImage(pieceImage, x, y, unitSize, unitSize, null);
             }
         }
@@ -285,8 +222,8 @@ public class Panel extends JPanel {
             // Draw all non-selected pieces
             for (int row = 0; row < 8; row++) {
                 for (int col = 0; col < 8; col++) {
-                    Piece piece = board[row][col];
-                    if (piece == null || piece == selectedPiece) continue;
+                    Piece piece = gameState.board[row][col];
+                    if (piece == null || piece == gameState.selectedPiece) continue;
 
                     Image pieceImage = (piece.getColor() == PieceColor.WHITE)
                             ? whiteImages[piece.IMAGEINDEX]
@@ -299,12 +236,14 @@ public class Panel extends JPanel {
 
 
             // Draw dragged piece on top (once)
-            if (selectedPiece != null) {
-                Image pieceImage = (selectedPiece.getColor() == PieceColor.WHITE)
-                        ? whiteImages[selectedPiece.IMAGEINDEX]
-                        : blackImages[selectedPiece.IMAGEINDEX];
-                int x = currentMouseX - dragOffsetX - unitSize / 2;
-                int y = currentMouseY - dragOffsetY - unitSize / 2;
+            if (gameState.selectedPiece != null) {
+                Image pieceImage = (gameState.selectedPiece.getColor() == PieceColor.WHITE)
+                        ? whiteImages[gameState.selectedPiece.IMAGEINDEX]
+                        : blackImages[gameState.selectedPiece.IMAGEINDEX];
+                //int x = currentMouseX - dragOffsetX - unitSize / 2;
+                //int y = currentMouseY - dragOffsetY - unitSize / 2;
+                int x = gameState.currentMouseX  - unitSize / 2;
+                int y = gameState.currentMouseY  - unitSize / 2;
                 g2.drawImage(pieceImage, x, y, unitSize, unitSize, null);
             }
         }
@@ -317,10 +256,15 @@ public class Panel extends JPanel {
                    Color color = (row + col) % 2 == 0 ?
                             new Color(210, 180, 140) :
                             new Color(139, 69, 19);
+                   if(gameState.backwards)
+                        color = (row + col) % 2 == 0 ? new Color(139, 69, 19)
+                                : new Color(210, 180, 140);
+
                    g2.setColor(color);
-                    if(backwards)
+                   // if its backwards offset the row
+                    if(gameState.backwards)
                         row = 7 - row;
-                    if(selectedPiece != null && selectedPiece.isValidMove(col,row,board))
+                    if(gameState.selectedPiece != null && gameState.isValidMove(col,row))
                         g2.setColor(new Color(255, 255, 255));
 
 
@@ -330,6 +274,60 @@ public class Panel extends JPanel {
 
                 }
 
+            }
+
+        }
+        private void drawGameOverScreen(Graphics2D g2)
+        {
+            int bannerX,bannerY,BannerWidth,BannerHeight,arcWidth,arcHeight;
+            bannerX = unitSize*4 - ((int) (unitSize*1.5));
+            bannerY = unitSize*4 - ((int) (unitSize*1.5));
+            BannerWidth = unitSize * 3;
+            BannerHeight = unitSize * 3;
+            arcWidth = 15;
+            arcHeight = 15;
+
+            g2.setColor(new Color(175, 125, 80));
+            //drawing shape where text will be (x,y,width,height,arcWidth,arcHeight)
+            g2.fillRoundRect(bannerX,
+                    bannerY,
+                     BannerWidth,
+                     BannerHeight,
+                    arcWidth,
+                    arcHeight);
+            Font font = new Font("Arial", Font.BOLD, (BannerWidth / 10));
+            g2.setFont(font);
+            String gameOverMessage;
+            if(gameState.getOutcome() == 0) {
+                g2.setColor(new Color(128, 128, 128));
+                gameOverMessage = "Tie";
+            }
+           else if ((gameState.getOutcome() == 1))
+           {
+                g2.setColor(new Color(255, 255, 255));
+               gameOverMessage = "White Wins!";
+            } else
+            {
+                g2.setColor(new Color(0, 0, 0));
+                gameOverMessage = "Black Wins";
+            }
+
+            g2.drawString(gameOverMessage,bannerX + (BannerWidth / 5),bannerY + (BannerWidth / 5));
+
+        }
+        private int convertToScaled(int n)
+        {
+            return (int) (n / scalingFactor);
+        }
+
+
+    }
+    private class GameLoop implements Runnable {
+
+        @Override
+        public void run() {
+            while (true) {
+                repaint();
             }
         }
     }

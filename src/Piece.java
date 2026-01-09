@@ -3,7 +3,7 @@ public abstract class Piece {
     protected PieceColor pieceColor;
     protected boolean hasMoved;
     public final int IMAGEINDEX;
-
+    public SpecialMove specialMove = SpecialMove.NONE;
     public Piece(int x, int y, PieceColor pieceColor, int imageIndex) {
         this.IMAGEINDEX = imageIndex;
         this.x = x;
@@ -23,6 +23,15 @@ public abstract class Piece {
     {
         return pieceColor;
     }
-
+    public abstract char getFenSymbol();
+    public abstract Piece copy();
+    public boolean hasMoved()
+    {
+        return hasMoved;
+    }
+    public SpecialMove getSpecialMove()
+    {
+        return specialMove;
+    }
 
 }

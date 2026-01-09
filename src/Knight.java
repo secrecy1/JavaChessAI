@@ -22,4 +22,13 @@ public class Knight extends Piece{
     public void move(int newX, int newY) {
         super.move(newX, newY);
     }
+    @Override
+    public char getFenSymbol()
+    {
+        return pieceColor == PieceColor.WHITE ? 'N': 'n';
+    }
+    public Piece copy()
+    {
+        return new Knight(this.x, this.y, this.pieceColor);
+    }
 }

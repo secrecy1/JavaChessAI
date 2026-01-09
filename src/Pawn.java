@@ -1,6 +1,8 @@
 
 public class Pawn extends Piece {
     boolean hasMoved = false;
+    boolean lastMoveWasDouble = false;
+    public SpecialMove specialMove = SpecialMove.NONE;
     public Pawn(int x, int y, PieceColor pieceColor){
 
             super(x, y, pieceColor, 0);
@@ -8,6 +10,7 @@ public class Pawn extends Piece {
     }
     @Override
     public boolean isValidMove(int newX, int newY, Piece[][] board) {
+        specialMove = SpecialMove.NONE;
         int incr = (pieceColor == PieceColor.WHITE) ? 1 : -1;
 
         // Check if new position is within the board bounds
@@ -18,38 +21,88 @@ public class Pawn extends Piece {
         // Moving straight forward
         if (newX == x) {
             // Check for one step move
-            if (newY == y - incr) {
-                return board[newY][x] == null;
+            if (newY == y - incr && board[newY][x] == null) {
+
+                return true;
             }
+            else if(newY == y - incr && board[newY][x] != null)
+            {
+                return false;
+            }
+
             // Check for two steps move (only if not moved yet)
             else if (newY == y - 2 * incr && !hasMoved) {
                 int intermediateY = y - incr;
-                return board[newY][x] == null && board[intermediateY][x] == null;
+                if (board[newY][x] == null && board[intermediateY][x] == null)
+                {
+
+                    return true;
+
+                }
+
             } else {
+
                 return false;
             }
         }
         // Diagonal capture (including en passant later)
         else if (Math.abs(newX - x) == 1 && newY == y - incr) {
-            // Check if target square has an enemy piece
-            Piece targetPiece = board[newY][newX];
-            if (targetPiece != null && targetPiece.pieceColor != this.pieceColor) {
-                return true;
-            }
-            // TODO: Add en passant logic here
-            else {
-                return false;
-            }
-        }
-        // All other cases are invalid
-        else {
-            return false;
-        }
+        Piece targetPiece = board[newY][newX];
+    // Normal diagonal capture
+    if (targetPiece != null && targetPiece.pieceColor != this.pieceColor) {
+        return true;
     }
+
+    // En passant
+    Piece sidePiece = board[y][newX]; // pawn beside us
+
+    if (sidePiece instanceof Pawn &&
+        sidePiece.pieceColor != this.pieceColor &&
+        ((Pawn) sidePiece).isLastMoveWasDouble()) {
+
+        specialMove = SpecialMove.EN_PASSANT;
+        return true;
+    }
+
+    return false;
+	}
+
+        // All other cases are invalid
+
+            return false;
+
+    }
+
+
     @Override
     public void move(int newX, int newY) {
+        // Check if this is a two-step move: absolute change in y is 2
+        if (Math.abs(newY - y) == 2) {
+            lastMoveWasDouble = true;
+        } else {
+            lastMoveWasDouble = false;
+        }
+        System.out.println(newY + " " + PieceColor.WHITE);
         hasMoved = true;
-         // Update x/y in base class
-        super.move(newX,newY);
+        super.move(newX, newY);
+    }
+    @Override
+    public char getFenSymbol()
+    {
+        return pieceColor == PieceColor.WHITE ? 'P': 'p';
+    }
+    public Piece copy()
+    {
+        Pawn p = new Pawn(this.x, this.y, this.pieceColor);
+        p.hasMoved = this.hasMoved;
+    	p.lastMoveWasDouble = this.lastMoveWasDouble;
+    	p.specialMove = this.specialMove;
+    	return p;
+    }
+    public boolean isLastMoveWasDouble()
+    {
+        return lastMoveWasDouble;
     }
 }
+
+

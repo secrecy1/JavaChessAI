@@ -101,4 +101,13 @@ public class Queen extends Piece {
 
         return true;
     }
+    @Override
+    public char getFenSymbol()
+    {
+        return pieceColor == PieceColor.WHITE ? 'Q': 'q';
+    }
+    public Piece copy()
+    {
+        return new Queen(this.x, this.y, this.pieceColor);
+    }
 }
