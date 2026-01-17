@@ -1,6 +1,6 @@
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
-
+import javax.swing.*;
 public class GameState
 {
     public PieceColor turnColor;
@@ -17,7 +17,7 @@ public class GameState
     boolean gameOver;
     int outcome;
     private int lastMoveStartRow, lastMoveStartCol, lastMoveTargetRow, lastMoveTargetCol;
-    
+    public boolean awaitingPromotion; 
     private Piece lastMovedPiece;
     public GameState(String fen)
     {
@@ -30,6 +30,7 @@ public class GameState
         backwards = false;
         loadFromFEN(fen);
         gameOver = false;
+        awaitingPromotion = false;
     }
     private void loadFromFEN(String fen)
     {
@@ -268,10 +269,6 @@ public class GameState
                             }
 
                 }
-                else if( selectedPiece instanceof Pawn && ((Pawn)selectedPiece).specialMove == SpecialMove.PROMOTION)
-                {
-                    System.out.println("Promotion detected");
-                }
                     //normal moves
                     else {
 
@@ -289,16 +286,39 @@ public class GameState
 
 
                         // Update board state
-
+                        boolean awaitingPromotion = false;
                         board[originalRow][originalCol] = null;
 
                         selectedPiece.move(targetCol, targetRow);
                         board[targetRow][targetCol] = selectedPiece;
+                        // check for promotion
+                        if(selectedPiece instanceof Pawn && 
+                        (selectedPiece.getColor() == PieceColor.WHITE && selectedPiece.y == 0) ||
+                        (selectedPiece.getColor() == PieceColor.BLACK && selectedPiece.y == 7))
+                        {
+                            awaitingPromotion = true;
+                            System.out.println("Promotion detected");
+                               /* 
+                            JPanel promotionPanel = new JPanel();
+                            promotionPanel.setLayout(new GridLayout(1, 4));
 
+                            JButton queen = new JButton("Q");
+                            JButton rook  = new JButton("R");
+                            JButton bishop= new JButton("B");
+                            JButton knight= new JButton("N");
+
+promotionPanel.add(queen);
+promotionPanel.add(rook);
+promotionPanel.add(bishop);
+promotionPanel.add(knight);*/
+                        }
+                        if(!awaitingPromotion)
+                        {
                         turnColor = (turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
                         backwards = !backwards;
                         checkGameStatus(board);
                         lastMovedPiece = selectedPiece;
+                        }
                     }
                 }
 
