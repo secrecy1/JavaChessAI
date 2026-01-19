@@ -1,6 +1,6 @@
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
-import javax.swing.*;
+
 public class GameState
 {
     public PieceColor turnColor;
@@ -14,6 +14,7 @@ public class GameState
     private int originalRow, originalCol;
     public int currentMouseX;
     public int currentMouseY;
+    public boolean promotion;
     boolean gameOver;
     int outcome;
     private int lastMoveStartRow, lastMoveStartCol, lastMoveTargetRow, lastMoveTargetCol;
@@ -21,6 +22,7 @@ public class GameState
     private Piece lastMovedPiece;
     public GameState(String fen)
     {
+        promotion = false;
         lastMoveStartRow = -1;
         lastMoveStartCol = -1;
         lastMoveTargetRow = -1;
@@ -185,14 +187,9 @@ public class GameState
             row = y / unitSize;
             // if the board is backwards offset the row
             if(backwards)
+            {
                 row = 7 - y / unitSize;
 
-            selectedPiece = board[row][col];
-            if (selectedPiece != null) {
-                // track original position
-                originalRow = row;
-                originalCol = col;
-                // Update current mouse position (scaled coordinates)
                 currentMouseX = (int) (e.getX() / scalingFactor);
                 currentMouseY = (int) (e.getY() / scalingFactor);
             }
@@ -286,7 +283,7 @@ public class GameState
 
 
                         // Update board state
-                        boolean awaitingPromotion = false;
+                        
                         board[originalRow][originalCol] = null;
 
                         selectedPiece.move(targetCol, targetRow);
@@ -296,7 +293,7 @@ public class GameState
                         (selectedPiece.getColor() == PieceColor.WHITE && selectedPiece.y == 0) ||
                         (selectedPiece.getColor() == PieceColor.BLACK && selectedPiece.y == 7))
                         {
-                            awaitingPromotion = true;
+                            promotion = true;
                             System.out.println("Promotion detected");
                                /* 
                             JPanel promotionPanel = new JPanel();
