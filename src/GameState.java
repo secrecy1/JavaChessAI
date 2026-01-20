@@ -185,6 +185,7 @@ public class GameState
             int row;
             int col = x / unitSize;
             row = y / unitSize;
+
             // if the board is backwards offset the row
             if(backwards)
             {
@@ -192,6 +193,13 @@ public class GameState
 
                 currentMouseX = (int) (e.getX() / scalingFactor);
                 currentMouseY = (int) (e.getY() / scalingFactor);
+            }
+            selectedPiece = board[row][col];
+            if (selectedPiece != null) {
+                // track original position
+                originalRow = row;
+                originalCol = col;
+                // Update current mouse position (scaled coordinates)
             }
 
     }

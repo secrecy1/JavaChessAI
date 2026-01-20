@@ -269,10 +269,13 @@ public class Panel extends JPanel {
 
 
                     g2.fillRect(x, y, unitSize, unitSize);
-                    /* if(gameState.promotion)
-                    {
                     
-                    }*/
+                     if(gameState.promotion)
+                    {
+                        JPanel promotionPanel = new JPanel();
+                        promotionPanel.setSize(new Dimension(unitSize, unitSize * 4));
+                        promotionPanel.setLayout(new GridLayout(1, 4));
+                    }
 
 
                 }
