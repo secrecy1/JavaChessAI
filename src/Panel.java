@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.beans.FeatureDescriptor;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -16,7 +17,7 @@ public class Panel extends JPanel {
     private final Image[] blackImages = new Image[6];
     private final Image[] originalWhiteImages = new Image[6];
     private final Image[] originalBlackImages = new Image[6];
-
+    private final JPanel promo = new JPanel();
     private final double scalingFactor;
     BoardMouseListener bm;
     GameState gameState;
@@ -39,7 +40,7 @@ public class Panel extends JPanel {
         addMouseMotionListener(bm);
         initImages();
         scaleImages();
-
+        initPromoPanel();
         gameLoop = new Thread(new GameLoop());
         gameLoop.start();
 
@@ -75,7 +76,6 @@ public class Panel extends JPanel {
 
         super.paintComponent(g);
 
-
         Graphics2D g2d = (Graphics2D) g.create();
 
         // Apply high-DPI scaling
@@ -87,12 +87,18 @@ public class Panel extends JPanel {
 
         calculateUnitSize();
         scaleImages();
-        bm.drawBoard(g2d);
+        /*bm.drawBoard(g2d);
         if(gameState.backwards)
             bm.drawBackwards(g2d);
         else bm.drawPieces(g2d);
         if(gameState.gameOver)
-            bm.drawGameOverScreen(g2d);
+            bm.drawGameOverScreen(g2d); */
+       // if(gameState.promotion)
+        {
+
+            handlePromotion();
+
+        }
         g2d.dispose();
     }
 
@@ -122,6 +128,20 @@ public class Panel extends JPanel {
 
         return scaledImage;
     }
+        private void handlePromotion()
+        {
+            add(promo);
+        }
+        private void initPromoPanel()
+        {
+            promo.setPreferredSize(new Dimension(unitSize * 1 * 20, unitSize * 4 * 20));
+            promo.setBackground(Color.RED);
+            promo.setForeground(Color.RED);
+            revalidate();
+            
+            promo.setVisible(true);
+            repaint();
+        }
 
 
 
@@ -162,6 +182,7 @@ public class Panel extends JPanel {
                 removeMouseListener(bm);
                 removeMouseListener(bm);
                 repaint();
+                
             }
            else {
                 gameState.dragPiece(e, scalingFactor);
@@ -247,6 +268,7 @@ public class Panel extends JPanel {
                 g2.drawImage(pieceImage, x, y, unitSize, unitSize, null);
             }
         }
+        
         private void drawBoard(Graphics2D g2) {
             for (int row = 0; row < BOARD_SIZE; row++) {
                 for (int col = 0; col < BOARD_SIZE; col++) {
@@ -270,12 +292,7 @@ public class Panel extends JPanel {
 
                     g2.fillRect(x, y, unitSize, unitSize);
                     
-                     if(gameState.promotion)
-                    {
-                        JPanel promotionPanel = new JPanel();
-                        promotionPanel.setSize(new Dimension(unitSize, unitSize * 4));
-                        promotionPanel.setLayout(new GridLayout(1, 4));
-                    }
+
 
 
                 }

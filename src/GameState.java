@@ -179,6 +179,7 @@ public class GameState
 
     public void selectPiece(MouseEvent e, int unitSize, double scalingFactor)
     {
+        if(promotion) return;
 
             int x = convertToScaled(e.getX(),scalingFactor);
             int y = convertToScaled(e.getY(),scalingFactor);
@@ -199,6 +200,8 @@ public class GameState
                 // track original position
                 originalRow = row;
                 originalCol = col;
+                currentMouseX = (int) (e.getX() / scalingFactor);
+                currentMouseY = (int) (e.getY() / scalingFactor);
                 // Update current mouse position (scaled coordinates)
             }
 
@@ -209,6 +212,7 @@ public class GameState
     }
     public void dragPiece(MouseEvent e, double scalingFactor)
     {
+        if(promotion) return;
         if (selectedPiece != null) {
             // Update current mouse position (scaled coordinates)
             currentMouseX = (int) (e.getX() / scalingFactor);
@@ -218,6 +222,7 @@ public class GameState
     }
     public void releasePiece(MouseEvent e, int unitSize, double scalingFactor)
     {
+        if(promotion) return;
             if (selectedPiece != null) {
                 int x = convertToScaled(e.getX(),scalingFactor);
                 int y = convertToScaled(e.getY(),scalingFactor);
@@ -303,27 +308,12 @@ public class GameState
                         {
                             promotion = true;
                             System.out.println("Promotion detected");
-                               /* 
-                            JPanel promotionPanel = new JPanel();
-                            promotionPanel.setLayout(new GridLayout(1, 4));
-
-                            JButton queen = new JButton("Q");
-                            JButton rook  = new JButton("R");
-                            JButton bishop= new JButton("B");
-                            JButton knight= new JButton("N");
-
-promotionPanel.add(queen);
-promotionPanel.add(rook);
-promotionPanel.add(bishop);
-promotionPanel.add(knight);*/
+                            return;
                         }
-                        if(!awaitingPromotion)
-                        {
                         turnColor = (turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
                         backwards = !backwards;
                         checkGameStatus(board);
                         lastMovedPiece = selectedPiece;
-                        }
                     }
                 }
 
