@@ -20,8 +20,12 @@ public class GameState
     private int lastMoveStartRow, lastMoveStartCol, lastMoveTargetRow, lastMoveTargetCol;
     public boolean awaitingPromotion; 
     private Piece lastMovedPiece;
+    public int promotionx;
+    public Piece promoPiece;
+
     public GameState(String fen)
     {
+        promoPiece = null;
         promotion = false;
         lastMoveStartRow = -1;
         lastMoveStartCol = -1;
@@ -33,6 +37,7 @@ public class GameState
         loadFromFEN(fen);
         gameOver = false;
         awaitingPromotion = false;
+        promotionx = -1;
     }
     private void loadFromFEN(String fen)
     {
@@ -303,33 +308,39 @@ public class GameState
                         board[targetRow][targetCol] = selectedPiece;
                         // check for promotion
                         if(selectedPiece instanceof Pawn && 
-                        (selectedPiece.getColor() == PieceColor.WHITE && selectedPiece.y == 0) ||
-                        (selectedPiece.getColor() == PieceColor.BLACK && selectedPiece.y == 7))
+                        ((selectedPiece.getColor() == PieceColor.WHITE && selectedPiece.y == 0) ||
+                        (selectedPiece.getColor() == PieceColor.BLACK && selectedPiece.y == 7)))
                         {
+                            promotionx = selectedPiece.x;
                             promotion = true;
                             System.out.println("Promotion detected");
+                            board[targetRow][targetCol] = null;
+                            System.out.println(targetRow);
+                            System.out.println(targetCol);
+                            System.out.println(board[targetRow][targetCol]);
+                            selectedPiece = null;
                             return;
                         }
-                        turnColor = (turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
-                        backwards = !backwards;
-                        checkGameStatus(board);
-                        lastMovedPiece = selectedPiece;
+                        FlipSides();
                     }
+
                 }
-
-
-
-
-                // Reset selection
-
-                selectedPiece = null;
-
+                        selectedPiece = null;
+                        promotion = false;
             }
 
     }
     public boolean moveLeavesKingInCheck(int startRow, int startCol, int targetRow, int targetCol) {
         Piece[][] tempBoard = simulateMove(startRow, startCol, targetRow, targetCol);
         return isKingInCheck(tempBoard, turnColor);
+    }
+    public void FlipSides()
+    {
+        promotionx = -1;
+        turnColor = (turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
+        backwards = !backwards;
+        checkGameStatus(board);
+        lastMovedPiece = selectedPiece;
     }
 
     // Simulate a move on a temporary board

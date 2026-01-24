@@ -17,7 +17,6 @@ public class Panel extends JPanel {
     private final Image[] blackImages = new Image[6];
     private final Image[] originalWhiteImages = new Image[6];
     private final Image[] originalBlackImages = new Image[6];
-    private final JPanel promo = new JPanel();
     private final double scalingFactor;
     BoardMouseListener bm;
     GameState gameState;
@@ -40,7 +39,6 @@ public class Panel extends JPanel {
         addMouseMotionListener(bm);
         initImages();
         scaleImages();
-        initPromoPanel();
         gameLoop = new Thread(new GameLoop());
         gameLoop.start();
 
@@ -87,18 +85,17 @@ public class Panel extends JPanel {
 
         calculateUnitSize();
         scaleImages();
-        /*bm.drawBoard(g2d);
+        bm.drawBoard(g2d);
         if(gameState.backwards)
             bm.drawBackwards(g2d);
         else bm.drawPieces(g2d);
         if(gameState.gameOver)
-            bm.drawGameOverScreen(g2d); */
-       // if(gameState.promotion)
+            bm.drawGameOverScreen(g2d);
+        if(gameState.promotion)
         {
-
-            handlePromotion();
-
+            addPanelMenu(g2d);
         }
+        
         g2d.dispose();
     }
 
@@ -128,19 +125,17 @@ public class Panel extends JPanel {
 
         return scaledImage;
     }
-        private void handlePromotion()
+        private void addPanelMenu(Graphics2D g2)
         {
-            add(promo);
-        }
-        private void initPromoPanel()
-        {
-            promo.setPreferredSize(new Dimension(unitSize * 1 * 20, unitSize * 4 * 20));
-            promo.setBackground(Color.RED);
-            promo.setForeground(Color.RED);
-            revalidate();
-            
-            promo.setVisible(true);
-            repaint();
+            //4213
+            int xCord = gameState.promotionx * unitSize;  
+            Image[] images = (gameState.turnColor == PieceColor.WHITE) ? whiteImages : blackImages;
+            g2.setColor(Color.GRAY);        
+            g2.fillRect(xCord, 0, unitSize, unitSize * 4);
+            g2.drawImage(images[4], xCord, 0, unitSize, unitSize, null);
+            g2.drawImage(images[2], xCord, unitSize, unitSize, unitSize, null);
+            g2.drawImage(images[1], xCord,unitSize * 2 , unitSize, unitSize, null);
+            g2.drawImage(images[3], xCord, unitSize * 3, unitSize, unitSize, null);
         }
 
 
@@ -157,6 +152,7 @@ public class Panel extends JPanel {
         @Override
         public void mousePressed(MouseEvent e)
         {
+            handlePromotion(e);
             if(gameState.gameOver)
             {
                 gameOverScreen = true;
@@ -209,6 +205,33 @@ public class Panel extends JPanel {
             }
            repaint();
         }
+        private void handlePromotion(MouseEvent e)
+        {
+
+            if( (gameState.promotion) &&
+                    (e.getX() >= gameState.promotionx * unitSize && e.getX() <= gameState.promotionx * unitSize + unitSize))
+            {
+                // public Queen(int x, int y, PieceColor pieceColor){
+                int promoy = (gameState.turnColor == PieceColor.BLACK) ? 7: 0;
+                if(e.getY() >=  0 && e.getY() <= unitSize)
+                   gameState.promoPiece = new Queen(gameState.promotionx, promoy, gameState.turnColor);
+                else if(e.getY() >= unitSize  && e.getY() <= unitSize * 2)
+                   gameState.promoPiece = new Knight(gameState.promotionx, promoy, gameState.turnColor);
+                else if(e.getY() >= unitSize * 2 && e.getY() <= unitSize * 3)
+                   gameState.promoPiece = new Rook(gameState.promotionx, promoy, gameState.turnColor);
+                else if(e.getY() >= unitSize * 3 && e.getY() <= unitSize * 4)
+                   gameState.promoPiece = new Bishop(gameState.promotionx, promoy, gameState.turnColor);
+                if(e.getY() >= 0 && e.getY() <= unitSize * 4)
+                {
+                    gameState.board [promoy][gameState.promotionx] = gameState.promoPiece;
+                    gameState.promotion = false;
+                    gameState.FlipSides();
+                }
+                
+
+            }
+        }
+        
         private void drawPieces(Graphics2D g2)
         {
             // Draw all non-selected pieces
@@ -216,7 +239,6 @@ public class Panel extends JPanel {
                 for (int col = 0; col < 8; col++) {
                     Piece piece = gameState.board[row][col];
                     if (piece == null || piece == gameState.selectedPiece) continue;
-
                     Image pieceImage = (piece.getColor() == PieceColor.WHITE)
                             ? whiteImages[piece.IMAGEINDEX]
                             : blackImages[piece.IMAGEINDEX];
