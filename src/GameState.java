@@ -162,16 +162,18 @@ public class GameState
     public void checkGameStatus(Piece[][] board)
     {
 
-        if(halfMoveClock == 50)
-        {
-            gameOver = true;
-            outcome = 0;
-        }
-        else if(isKingInCheck(board,turnColor) && checkMate(turnColor))
+        if(isKingInCheck(board,turnColor) && checkMate(turnColor))
         {
             gameOver = true;
             outcome = (turnColor == PieceColor.WHITE) ? 2 : 1;
         }
+
+        else if(halfMoveClock == 50 || staleMate(turnColor))
+        {
+            gameOver = true;
+            outcome = 0;
+        }
+
 
 
 
@@ -247,9 +249,6 @@ public class GameState
                         && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol)
                 ) {
 
-                System.out.println("_-__-__");
-                System.out.println(selectedPiece instanceof Pawn);
-                System.out.println(selectedPiece.specialMove);
                     // castling
                     if (selectedPiece instanceof King && 
                     ((King) selectedPiece).castlingDirection != SpecialMove.NONE 
@@ -265,19 +264,8 @@ public class GameState
                     //en passant
                 else if(selectedPiece instanceof Pawn && ((Pawn) selectedPiece).specialMove == SpecialMove.EN_PASSANT)
                 {
-                            System.out.println("*************************");
-                            System.out.println("En passant");
-                            System.out.println(lastMovedPiece instanceof Pawn);
-                            System.out.println(((Pawn) lastMovedPiece).isLastMoveWasDouble());
-
-                            System.out.println( lastMovedPiece.x);
-                            System.out.println( lastMovedPiece.y);
-                            System.out.println("Last moved Piece color: "+ lastMovedPiece.pieceColor);
-                            System.out.println("Selected Piece color: " + selectedPiece.pieceColor);
-                            System.out.println("-----------------------");
                             if(lastMovedPiece instanceof Pawn && ((Pawn) lastMovedPiece).isLastMoveWasDouble())
                             {
-                                System.out.println("worked");
                                 //move Pawn
                                 handleEnPassant(targetCol, targetRow);
 
@@ -287,7 +275,6 @@ public class GameState
                     //normal moves
                     else {
 
-                        System.out.println(selectedPiece.hasMoved);
 
 
                         // Handle captures
@@ -412,17 +399,29 @@ public class GameState
         }
         return true;
     }
-    private boolean staleMate(PieceColor color)
-    {
-        for(int row = 0; row < 8; row++)
-        {
-            for(int col = 0; col < 8; col++)
-            {
-                
+private boolean staleMate(PieceColor color)
+{
+    // Rule 1: king must NOT be in check
+    if (isKingInCheck(board, color)) return false;
+
+    for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+            Piece piece = board[row][col];
+            if (piece != null && piece.pieceColor == color) {
+
+                for (int r = 0; r < 8; r++) {
+                    for (int c = 0; c < 8; c++) {
+                        if (piece.isValidMove(c, r, board)
+                            && !moveLeavesKingInCheck(row, col, r, c)) {
+                            return false; // Found at least one legal move
+                        }
+                    }
+                }
             }
         }
-        return false;
     }
+    return true; // no legal moves + not in check
+}
 
     private void handleCastling(SpecialMove castlingType, int kingRow, int kingCol) {
         System.out.println("Handling castling: " + castlingType + " at (" + kingCol + "," + kingRow + ")");
