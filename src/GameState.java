@@ -412,6 +412,18 @@ public class GameState
         }
         return true;
     }
+    private boolean staleMate(PieceColor color)
+    {
+        for(int row = 0; row < 8; row++)
+        {
+            for(int col = 0; col < 8; col++)
+            {
+                
+            }
+        }
+        return false;
+    }
+
     private void handleCastling(SpecialMove castlingType, int kingRow, int kingCol) {
         System.out.println("Handling castling: " + castlingType + " at (" + kingCol + "," + kingRow + ")");
         int rookCol, rookTargetCol, kingTargetCol;
