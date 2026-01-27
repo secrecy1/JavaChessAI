@@ -28,7 +28,7 @@ public class Panel extends JPanel {
         scalingFactor = gc != null ? gc.getDefaultTransform().getScaleX() : 1.0;
         setPreferredSize(new Dimension(600, 600));
         fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        gameState = new GameState(fenString);
+        gameState = new GameState(fenString, false);
         gameState.turnColor = PieceColor.WHITE;
         setLayout(null);
 

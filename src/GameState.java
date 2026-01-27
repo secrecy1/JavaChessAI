@@ -22,9 +22,12 @@ public class GameState
     private Piece lastMovedPiece;
     public int promotionx;
     public Piece promoPiece;
+    public PieceColor playerColor;
+    public boolean playingComputer;
 
-    public GameState(String fen)
+    public GameState(String fen, boolean playingComputer)
     {
+        this.playingComputer = playingComputer;
         promoPiece = null;
         promotion = false;
         lastMoveStartRow = -1;
@@ -202,6 +205,7 @@ public class GameState
                 currentMouseX = (int) (e.getX() / scalingFactor);
                 currentMouseY = (int) (e.getY() / scalingFactor);
             }
+            if(playingComputer && board[row][col].pieceColor != playerColor) return;
             selectedPiece = board[row][col];
             if (selectedPiece != null) {
                 // track original position
@@ -230,91 +234,91 @@ public class GameState
     public void releasePiece(MouseEvent e, int unitSize, double scalingFactor)
     {
         if(promotion) return;
-            if (selectedPiece != null) {
-                int x = convertToScaled(e.getX(),scalingFactor);
-                int y = convertToScaled(e.getY(),scalingFactor);
-                // Calculate target position
-                int targetRow;
-                int targetCol;
-                targetCol =  x / unitSize;
-                targetRow =  y / unitSize;
-                //if its backwards we need the opposite row kind of like reflecting of the y-axis
-                if(backwards)
-                    targetRow = 7 - y / unitSize;
+        if (selectedPiece == null) return;
+        int x = convertToScaled(e.getX(),scalingFactor);
+        int y = convertToScaled(e.getY(),scalingFactor);
+        // Calculate target position
+        int targetRow;
+        int targetCol;
+        targetCol =  x / unitSize;
+        targetRow =  y / unitSize;
+        //if its backwards we need the opposite row kind of like reflecting of the y-axis
+        if(backwards)
+            targetRow = 7 - y / unitSize;
 
-                // Validate move using piece's movement rules
-                if (targetRow >= 0 && targetRow < 8 &&
-                        targetCol >= 0 && targetCol < 8 &&
-                        (selectedPiece.isValidMove(targetCol, targetRow, board)) && selectedPiece.getColor() == turnColor
-                        && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol)
-                ) {
+        // Validate move using piece's movement rules
+        if (targetRow >= 0 && targetRow < 8 &&
+                targetCol >= 0 && targetCol < 8 &&
+                (selectedPiece.isValidMove(targetCol, targetRow, board)) && selectedPiece.getColor() == turnColor
+                && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol)
+        ) {
 
-                    // castling
-                    if (selectedPiece instanceof King && 
-                    ((King) selectedPiece).castlingDirection != SpecialMove.NONE 
-                    && !isKingInCheck(board,turnColor))
-                    {
-                        King king = (King) selectedPiece;
-                        System.out.println(king.castlingDirection);
-                        handleCastling(king.castlingDirection, originalRow, originalCol);
-                        king.castlingDirection = SpecialMove.NONE;
-                        // Reset immediately
+            // castling
+            if (selectedPiece instanceof King && 
+            ((King) selectedPiece).castlingDirection != SpecialMove.NONE 
+            && !isKingInCheck(board,turnColor))
+            {
+                King king = (King) selectedPiece;
+                System.out.println(king.castlingDirection);
+                handleCastling(king.castlingDirection, originalRow, originalCol);
+                king.castlingDirection = SpecialMove.NONE;
+                // Reset immediately
 
-                    }
-                    //en passant
-                else if(selectedPiece instanceof Pawn && ((Pawn) selectedPiece).specialMove == SpecialMove.EN_PASSANT)
-                {
-                            if(lastMovedPiece instanceof Pawn && ((Pawn) lastMovedPiece).isLastMoveWasDouble())
-                            {
-                                //move Pawn
-                                handleEnPassant(targetCol, targetRow);
-
-                            }
-
-                }
-                    //normal moves
-                    else {
-
-
-
-                        // Handle captures
-                        Piece targetPiece = board[targetRow][targetCol];
-
-                        updateMoveCounters(selectedPiece, targetRow, targetCol);
-                        if (targetPiece != null && targetPiece.getColor() != selectedPiece.getColor()) {
-                            board[targetRow][targetCol] = null;
-
-                        }
-
-
-                        // Update board state
-                        
-                        board[originalRow][originalCol] = null;
-
-                        selectedPiece.move(targetCol, targetRow);
-                        board[targetRow][targetCol] = selectedPiece;
-                        // check for promotion
-                        if(selectedPiece instanceof Pawn && 
-                        ((selectedPiece.getColor() == PieceColor.WHITE && selectedPiece.y == 0) ||
-                        (selectedPiece.getColor() == PieceColor.BLACK && selectedPiece.y == 7)))
-                        {
-                            promotionx = selectedPiece.x;
-                            promotion = true;
-                            System.out.println("Promotion detected");
-                            board[targetRow][targetCol] = null;
-                            System.out.println(targetRow);
-                            System.out.println(targetCol);
-                            System.out.println(board[targetRow][targetCol]);
-                            selectedPiece = null;
-                            return;
-                        }
-                        FlipSides();
-                    }
-
-                }
-                        selectedPiece = null;
-                        promotion = false;
             }
+            //en passant
+        else if(selectedPiece instanceof Pawn && ((Pawn) selectedPiece).specialMove == SpecialMove.EN_PASSANT)
+        {
+                    if(lastMovedPiece instanceof Pawn && ((Pawn) lastMovedPiece).isLastMoveWasDouble())
+                    {
+                        //move Pawn
+                        handleEnPassant(targetCol, targetRow);
+
+                    }
+
+        }
+            //normal moves
+            else {
+
+
+
+                // Handle captures
+                Piece targetPiece = board[targetRow][targetCol];
+
+                updateMoveCounters(selectedPiece, targetRow, targetCol);
+                if (targetPiece != null && targetPiece.getColor() != selectedPiece.getColor()) {
+                    board[targetRow][targetCol] = null;
+
+                }
+
+
+                // Update board state
+                
+                board[originalRow][originalCol] = null;
+
+                selectedPiece.move(targetCol, targetRow);
+                board[targetRow][targetCol] = selectedPiece;
+                // check for promotion
+                if(selectedPiece instanceof Pawn && 
+                ((selectedPiece.getColor() == PieceColor.WHITE && selectedPiece.y == 0) ||
+                (selectedPiece.getColor() == PieceColor.BLACK && selectedPiece.y == 7)))
+                {
+                    promotionx = selectedPiece.x;
+                    promotion = true;
+                    System.out.println("Promotion detected");
+                    board[targetRow][targetCol] = null;
+                    System.out.println(targetRow);
+                    System.out.println(targetCol);
+                    System.out.println(board[targetRow][targetCol]);
+                    selectedPiece = null;
+                    return;
+                }
+                FlipSides();
+            }
+
+        }
+                selectedPiece = null;
+                promotion = false;
+    
 
     }
     public boolean moveLeavesKingInCheck(int startRow, int startCol, int targetRow, int targetCol) {
