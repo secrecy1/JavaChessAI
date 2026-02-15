@@ -328,8 +328,11 @@ public class GameState
     public void FlipSides()
     {
         promotionx = -1;
+        if(!playingComputer)
+        {
         turnColor = (turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
         backwards = !backwards;
+        }
         checkGameStatus(board);
         lastMovedPiece = selectedPiece;
     }
