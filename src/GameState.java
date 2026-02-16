@@ -30,6 +30,7 @@ public class GameState
         this.playingComputer = playingComputer;
         promoPiece = null;
         promotion = false;
+        playerColor = PieceColor.WHITE;
         lastMoveStartRow = -1;
         lastMoveStartCol = -1;
         lastMoveTargetRow = -1;
@@ -205,16 +206,15 @@ public class GameState
                 currentMouseX = (int) (e.getX() / scalingFactor);
                 currentMouseY = (int) (e.getY() / scalingFactor);
             }
-            if(playingComputer && board[row][col].pieceColor != playerColor) return;
             selectedPiece = board[row][col];
-            if (selectedPiece != null) {
+            if (selectedPiece == null) return;
+            if(playingComputer && selectedPiece.pieceColor != playerColor) return;
                 // track original position
                 originalRow = row;
                 originalCol = col;
                 currentMouseX = (int) (e.getX() / scalingFactor);
                 currentMouseY = (int) (e.getY() / scalingFactor);
                 // Update current mouse position (scaled coordinates)
-            }
 
     }
     private int convertToScaled(int n, double scalingFactor)
