@@ -191,7 +191,7 @@ public class GameState
     public void selectPiece(MouseEvent e, int unitSize, double scalingFactor)
     {
         if(promotion) return;
-
+        if(playingComputer && turnColor != playerColor) return;
             int x = convertToScaled(e.getX(),scalingFactor);
             int y = convertToScaled(e.getY(),scalingFactor);
             int row;
@@ -328,11 +328,8 @@ public class GameState
     public void FlipSides()
     {
         promotionx = -1;
-        if(!playingComputer)
-        {
+        if(!playingComputer) backwards = !backwards;
         turnColor = (turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
-        backwards = !backwards;
-        }
         checkGameStatus(board);
         lastMovedPiece = selectedPiece;
     }
