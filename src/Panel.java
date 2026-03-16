@@ -27,8 +27,12 @@ public class Panel extends JPanel {
         GraphicsConfiguration gc = getGraphicsConfiguration();
         scalingFactor = gc != null ? gc.getDefaultTransform().getScaleX() : 1.0;
         setPreferredSize(new Dimension(600, 600));
-        fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+//        fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        
+        fenString = "3qk3/8/8/8/8/8/8/3QK3 w KQkq - 0 1";
         gameState = new GameState(fenString, true);
+        ChessAI AI = new ChessAI(gameState);
+        gameState.addAI(AI);
         gameState.turnColor = PieceColor.WHITE;
         setLayout(null);
 
@@ -301,22 +305,14 @@ public class Panel extends JPanel {
                             new Color(210, 180, 140) :
                             new Color(139, 69, 19);
                    if(gameState.backwards)
-                        color = (row + col) % 2 == 0 ? new Color(139, 69, 19)
-                                : new Color(210, 180, 140);
+                        color = (row + col) % 2 == 0 ? new Color(139, 69, 19) : new Color(210, 180, 140);
 
                    g2.setColor(color);
                    // if its backwards offset the row
-                    if(gameState.backwards)
-                        row = 7 - row;
-                    if(gameState.selectedPiece != null && gameState.isValidMove(col,row))
+                   int boardRow = gameState.backwards ? 7 - row : row;
+                    if(gameState.selectedPiece != null && gameState.isValidMove(col,boardRow))
                         g2.setColor(new Color(255, 255, 255));
-
-
                     g2.fillRect(x, y, unitSize, unitSize);
-                    
-
-
-
                 }
 
             }
