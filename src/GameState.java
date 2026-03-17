@@ -331,7 +331,9 @@ public class GameState
     }
     public void makeMove(int targetRow, int targetCol, Piece selectedPiece)
     {
-        moveFailed = true;
+        if(selectedPiece == null) return;
+        originalCol = selectedPiece.x;
+        originalRow = selectedPiece.y;
 
         // Validate move using piece's movement rules
         if (targetRow >= 0 && targetRow < 8 &&
@@ -339,6 +341,7 @@ public class GameState
                 (selectedPiece.isValidMove(targetCol, targetRow, board)) && selectedPiece.getColor() == turnColor
                 && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol)
         ) {
+            System.out.println("if statement triggered");
 
             // castling
             if (selectedPiece instanceof King && 
@@ -405,7 +408,6 @@ public class GameState
         }
                 selectedPiece = null;
                 promotion = false;
-                moveFailed = false;
     }
 
     public boolean moveLeavesKingInCheck(int startRow, int startCol, int targetRow, int targetCol) {
@@ -416,11 +418,12 @@ public class GameState
     {
         promotionx = -1;
         if(!playingComputer) backwards = !backwards;
-        if(playingComputer && AI != null && playerColor == turnColor)
+        turnColor = (turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
+        
+        if(playingComputer && AI != null && playerColor != turnColor)
         {
             AI.makeMove();
         }
-        turnColor = (turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
         checkGameStatus(board);
         lastMovedPiece = selectedPiece;
 
