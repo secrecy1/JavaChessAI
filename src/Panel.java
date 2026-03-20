@@ -27,13 +27,16 @@ public class Panel extends JPanel {
         GraphicsConfiguration gc = getGraphicsConfiguration();
         scalingFactor = gc != null ? gc.getDefaultTransform().getScaleX() : 1.0;
         setPreferredSize(new Dimension(600, 600));
-//        fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         
-        fenString = "3qk3/8/8/8/8/8/8/3QK3 w KQkq - 0 1";
-        gameState = new GameState(fenString, true);
-        ChessAI AI = new ChessAI(gameState);
+        //fenString = "4k3/r7/r7/r7/r7/r7/r7/3QK3 w KQkq - 0 1";
+        gameState = new GameState(fenString, true, true);
+        ChessAI AI = new ChessAI(gameState, PieceColor.WHITE);
+        ChessAI AI2 = new ChessAI(gameState, PieceColor.BLACK);
         gameState.addAI(AI);
+        gameState.addAI2(AI2);
         gameState.turnColor = PieceColor.WHITE;
+        gameState.startAIBattle();
         setLayout(null);
 
        // gameOverPanel.setPreferredSize(new Dimension(unitSize*2,unitSize*2));

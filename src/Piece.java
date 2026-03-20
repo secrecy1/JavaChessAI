@@ -33,5 +33,20 @@ public abstract class Piece {
     {
         return specialMove;
     }
+    // maybe if needed will refactor this to return the number of available moves instead of if there are any available moves
+    public boolean hasAvailableMove(Piece[][] board)
+    {
+        int total = 0;
+        for(int row = 0; row < 8; row++)
+            for(int col = 0; col < 8; col++)
+                total += this.isValidMove(row, col, board) ? 1 : 0;
+        return total != 0;
+    }
+    @Override
+    public String toString()
+    {
+        return "Type: " + this.getClass() + "| Color: " + this.pieceColor + "col(x): " + this.x + "| row(y): " + this.y;
+    }
+
 
 }

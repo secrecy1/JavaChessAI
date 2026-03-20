@@ -26,8 +26,11 @@ public class GameState
     public boolean playingComputer;
     public boolean moveFailed;
     private ChessAI AI;
-
-    public GameState(String fen, boolean playingComputer)
+    private ChessAI AI2;
+    public boolean twoAIS;
+    private int index = 0;
+    private ChessAI[] AIS = new ChessAI[2];
+    public GameState(String fen, boolean playingComputer, boolean twoAIS)
     {
         this.playingComputer = playingComputer;
         promoPiece = null;
@@ -44,6 +47,7 @@ public class GameState
         gameOver = false;
         awaitingPromotion = false;
         promotionx = -1;
+        this.twoAIS = true;
     }
     private void loadFromFEN(String fen)
     {
@@ -222,7 +226,6 @@ public class GameState
 
     public void makeMove(int targetRow, int targetCol)
     {
-        moveFailed = true;
 
         // Validate move using piece's movement rules
         if (targetRow >= 0 && targetRow < 8 &&
@@ -237,7 +240,6 @@ public class GameState
             && !isKingInCheck(board,turnColor))
             {
                 King king = (King) selectedPiece;
-                System.out.println(king.castlingDirection);
                 handleCastling(king.castlingDirection, originalRow, originalCol);
                 king.castlingDirection = SpecialMove.NONE;
                 // Reset immediately
@@ -282,11 +284,7 @@ public class GameState
                 {
                     promotionx = selectedPiece.x;
                     promotion = true;
-                    System.out.println("Promotion detected");
                     board[targetRow][targetCol] = null;
-                    System.out.println(targetRow);
-                    System.out.println(targetCol);
-                    System.out.println(board[targetRow][targetCol]);
                     selectedPiece = null;
                     return;
                 }
@@ -296,7 +294,6 @@ public class GameState
         }
                 selectedPiece = null;
                 promotion = false;
-                moveFailed = false;
     }
 
     private int convertToScaled(int n, double scalingFactor)
@@ -341,7 +338,6 @@ public class GameState
                 (selectedPiece.isValidMove(targetCol, targetRow, board)) && selectedPiece.getColor() == turnColor
                 && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol)
         ) {
-            System.out.println("if statement triggered");
 
             // castling
             if (selectedPiece instanceof King && 
@@ -349,7 +345,6 @@ public class GameState
             && !isKingInCheck(board,turnColor))
             {
                 King king = (King) selectedPiece;
-                System.out.println(king.castlingDirection);
                 handleCastling(king.castlingDirection, originalRow, originalCol);
                 king.castlingDirection = SpecialMove.NONE;
                 // Reset immediately
@@ -394,11 +389,7 @@ public class GameState
                 {
                     promotionx = selectedPiece.x;
                     promotion = true;
-                    System.out.println("Promotion detected");
                     board[targetRow][targetCol] = null;
-                    System.out.println(targetRow);
-                    System.out.println(targetCol);
-                    System.out.println(board[targetRow][targetCol]);
                     selectedPiece = null;
                     return;
                 }
@@ -408,26 +399,47 @@ public class GameState
         }
                 selectedPiece = null;
                 promotion = false;
+                if(twoAIS)
+                otherAIMakesMove();
     }
 
     public boolean moveLeavesKingInCheck(int startRow, int startCol, int targetRow, int targetCol) {
         Piece[][] tempBoard = simulateMove(startRow, startCol, targetRow, targetCol);
         return isKingInCheck(tempBoard, turnColor);
     }
+    public void startAIBattle()
+    {
+
+        AIS[0] = AI;
+        AIS[1] = AI2;
+        AIS[0].makeMove();
+        index++;
+
+    }
     public void FlipSides()
     {
         promotionx = -1;
         if(!playingComputer) backwards = !backwards;
         turnColor = (turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
-        
-        if(playingComputer && AI != null && playerColor != turnColor)
+        checkGameStatus(board);
+        if(playingComputer && AI != null && playerColor != turnColor && !twoAIS)
         {
             AI.makeMove();
         }
-        checkGameStatus(board);
+        
         lastMovedPiece = selectedPiece;
 
     }
+    public void otherAIMakesMove()
+    {
+
+        if(playingComputer && twoAIS)
+        {
+            AIS[index % 2].makeMove();
+            index++;
+        }
+    }
+
 
     // Simulate a move on a temporary board
     private Piece[][] simulateMove(int startRow, int startCol, int targetRow, int targetCol) {
@@ -613,6 +625,48 @@ private boolean staleMate(PieceColor color)
         this.AI = AI;
     }
 
+    public boolean isValidMove(int targetCol, int targetRow, Piece selectedPiece)
+    {
+        originalRow = selectedPiece.y;
+        originalCol = selectedPiece.x;
+        if (targetRow >= 0 && targetRow < 8 &&
+                targetCol >= 0 && targetCol < 8 &&
+                (selectedPiece.isValidMove(targetCol, targetRow, board)) && selectedPiece.getColor() == turnColor
+                && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol)
+        ) {
+            if(selectedPiece instanceof Pawn && ((Pawn) selectedPiece).specialMove == SpecialMove.EN_PASSANT)
+            {
+
+                return lastMovedPiece instanceof Pawn && ((Pawn) lastMovedPiece).isLastMoveWasDouble() && lastMovedPiece.y == selectedPiece.y && Math.abs(lastMovedPiece.x - selectedPiece.x) == 1;
+
+            }
+            if (selectedPiece instanceof King) {
+                King king = (King) selectedPiece;
+                if (king.castlingDirection != SpecialMove.NONE) {
+                    return !isKingInCheck(board, turnColor);
+                }
+            }
+            return true;
+        }
+        return false;
+        }
+
+    // maybe if needed will refactor this to return the number of available moves instead of if there are any available moves
+    public boolean hasAvailableMove(Piece selectedPiece)
+    {
+        int total = 0;
+        for(int row = 0; row < 8; row++)
+            for(int col = 0; col < 8; col++)
+                total += this.isValidMove(row, col, selectedPiece) ? 1 : 0;
+        return total != 0;
+    }
+public void addAI2(ChessAI AI)
+{
+
+this.AI2 = AI;
+
+
+}
 
 
 }
