@@ -1,5 +1,6 @@
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
+import java.util.List;
 
 public class GameState
 {
@@ -47,7 +48,7 @@ public class GameState
         gameOver = false;
         awaitingPromotion = false;
         promotionx = -1;
-        this.twoAIS = true;
+        this.twoAIS = twoAIS;
     }
     private void loadFromFEN(String fen)
     {
@@ -178,15 +179,11 @@ public class GameState
             outcome = (turnColor == PieceColor.WHITE) ? 2 : 1;
         }
 
-        else if(halfMoveClock == 50 || staleMate(turnColor))
+        else if(halfMoveClock == 50 || staleMate(turnColor) || isInsufficientMaterial())
         {
             gameOver = true;
             outcome = 0;
         }
-
-
-
-
     }
     public int getOutcome()
     {
@@ -399,8 +396,6 @@ public class GameState
         }
                 selectedPiece = null;
                 promotion = false;
-                if(twoAIS)
-                otherAIMakesMove();
     }
 
     public boolean moveLeavesKingInCheck(int startRow, int startCol, int targetRow, int targetCol) {
@@ -412,8 +407,15 @@ public class GameState
 
         AIS[0] = AI;
         AIS[1] = AI2;
-        AIS[0].makeMove();
-        index++;
+        new Thread(() -> {
+            while (!gameOver) 
+            {
+                AIS[index % 2].makeMove();
+                index++;
+                try { Thread.sleep(300); } // optional delay so you can see moves
+                catch (InterruptedException e) { break; }
+            }
+    }).start();
 
     }
     public void FlipSides()
@@ -430,15 +432,49 @@ public class GameState
         lastMovedPiece = selectedPiece;
 
     }
-    public void otherAIMakesMove()
-    {
+private boolean isInsufficientMaterial() {
+    // Collect all pieces still on the board
+    List<Piece> whitePieces = new java.util.ArrayList<>();
+    List<Piece> blackPieces = new java.util.ArrayList<>();
 
-        if(playingComputer && twoAIS)
-        {
-            AIS[index % 2].makeMove();
-            index++;
+    for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+            Piece p = board[row][col];
+            if (p == null) continue;
+            if (p.getColor() == PieceColor.WHITE) whitePieces.add(p);
+            else blackPieces.add(p);
         }
     }
+
+    // Any pawns, rooks, or queens = sufficient material
+    for (Piece p : whitePieces)
+        if (p instanceof Pawn || p instanceof Rook || p instanceof Queen) return false;
+    for (Piece p : blackPieces)
+        if (p instanceof Pawn || p instanceof Rook || p instanceof Queen) return false;
+
+    int wCount = whitePieces.size(); // includes king
+    int bCount = blackPieces.size();
+
+    // K vs K
+    if (wCount == 1 && bCount == 1) return true;
+
+    // K+B vs K  or  K+N vs K  (either side)
+    if (wCount == 1 && bCount == 2) return true;
+    if (wCount == 2 && bCount == 1) return true;
+
+    // K+B vs K+B — draw only if bishops are on the same color square
+    if (wCount == 2 && bCount == 2) {
+        Piece wb = whitePieces.stream().filter(p -> p instanceof Bishop).findFirst().orElse(null);
+        Piece bb = blackPieces.stream().filter(p -> p instanceof Bishop).findFirst().orElse(null);
+        if (wb != null && bb != null) {
+            boolean wBishopOnLight = (wb.x + wb.y) % 2 == 0;
+            boolean bBishopOnLight = (bb.x + bb.y) % 2 == 0;
+            return wBishopOnLight == bBishopOnLight;
+        }
+    }
+
+    return false;
+}
 
 
     // Simulate a move on a temporary board
