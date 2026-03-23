@@ -173,18 +173,35 @@ public class GameState
     public void checkGameStatus(Piece[][] board)
     {
 
-        if(isKingInCheck(board,turnColor) && checkMate(turnColor))
+        if(isKingInCheck(board,turnColor) && checkMate(turnColor, board))
         {
             gameOver = true;
             outcome = (turnColor == PieceColor.WHITE) ? 2 : 1;
         }
 
-        else if(halfMoveClock == 50 || staleMate(turnColor) || isInsufficientMaterial())
+        else if(halfMoveClock == 50 || staleMate(turnColor, board) || isInsufficientMaterial())
         {
             gameOver = true;
             outcome = 0;
         }
     }
+    public int getGameStatus(Piece[][] board)
+    {
+
+        if(isKingInCheck(board,turnColor) && checkMate(turnColor, board))
+        {
+            return (turnColor == PieceColor.WHITE) ? 2 : 1;
+        }
+
+        else if(halfMoveClock == 50 || staleMate(turnColor, board) || isInsufficientMaterial())
+        {
+            return 0;
+        }
+        return -1;
+
+
+    }
+
     public int getOutcome()
     {
 
@@ -528,7 +545,7 @@ private boolean isInsufficientMaterial() {
         }
         return false;
     }
-    private boolean checkMate(PieceColor color)
+    private boolean checkMate(PieceColor color, Piece[][] board)
     {
         for(int row = 0; row < 8; row++)
         {
@@ -546,7 +563,7 @@ private boolean isInsufficientMaterial() {
         }
         return true;
     }
-private boolean staleMate(PieceColor color)
+private boolean staleMate(PieceColor color, Piece[][] board)
 {
     // Rule 1: king must NOT be in check
     if (isKingInCheck(board, color)) return false;
