@@ -13,7 +13,7 @@ public class ChessAI {
         int selectrow = (int)(Math.random() * 8);
         int selectcol = (int)(Math.random() * 8);
         selectedPiece = gameState.board[selectrow][selectcol];
-        while(selectedPiece == null || selectedPiece.pieceColor != color || !gameState.hasAvailableMove(selectedPiece))
+        while(selectedPiece == null || selectedPiece.pieceColor != color || !GameState.hasAvailableMove(selectedPiece, gameState))
         {
             System.out.println("finding valid piece: "+ color + "| " + gameState.turnColor);
             selectrow = (int)(Math.random() * 8);
@@ -22,7 +22,7 @@ public class ChessAI {
         }
         int row = (int)(Math.random() * 8);
         int col = (int)(Math.random() * 8);
-        while(!gameState.isValidMove(col, row, selectedPiece))
+        while(!GameState.isValidMove(col, row, selectedPiece, gameState))
         {
             System.out.println("finding valid move | selected peice info: " + selectedPiece);
             row = (int)(Math.random() * 8);
@@ -55,6 +55,11 @@ public class ChessAI {
         gameState.promotion = false;
         gameState.FlipSides();
         }
+
+    }
+    public int minimax(Piece[][] positon, int depth, boolean MaxPlayer)
+    {
+        return 0;
     }
 }
 

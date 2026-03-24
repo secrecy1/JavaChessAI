@@ -245,7 +245,7 @@ public class GameState
         if (targetRow >= 0 && targetRow < 8 &&
                 targetCol >= 0 && targetCol < 8 &&
                 (selectedPiece.isValidMove(targetCol, targetRow, board)) && selectedPiece.getColor() == turnColor
-                && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol)
+                && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol, board, turnColor)
         ) {
 
             // castling
@@ -350,7 +350,7 @@ public class GameState
         if (targetRow >= 0 && targetRow < 8 &&
                 targetCol >= 0 && targetCol < 8 &&
                 (selectedPiece.isValidMove(targetCol, targetRow, board)) && selectedPiece.getColor() == turnColor
-                && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol)
+                && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol, board, turnColor)
         ) {
 
             // castling
@@ -415,8 +415,8 @@ public class GameState
                 promotion = false;
     }
 
-    public boolean moveLeavesKingInCheck(int startRow, int startCol, int targetRow, int targetCol) {
-        Piece[][] tempBoard = simulateMove(startRow, startCol, targetRow, targetCol);
+    public static boolean moveLeavesKingInCheck(int startRow, int startCol, int targetRow, int targetCol, Piece[][] board, PieceColor turnColor) {
+        Piece[][] tempBoard = simulateMove(startRow, startCol, targetRow, targetCol, board);
         return isKingInCheck(tempBoard, turnColor);
     }
     public void startAIBattle()
@@ -495,7 +495,7 @@ private boolean isInsufficientMaterial() {
 
 
     // Simulate a move on a temporary board
-    private Piece[][] simulateMove(int startRow, int startCol, int targetRow, int targetCol) {
+    private static Piece[][] simulateMove(int startRow, int startCol, int targetRow, int targetCol, Piece[][] board) {
         // 1. Create a deep copy of the board
         Piece[][] tempBoard = new Piece[8][8];
         for (int i = 0; i < 8; i++) {
@@ -515,7 +515,7 @@ private boolean isInsufficientMaterial() {
 
         return tempBoard;
     }
-    public boolean isKingInCheck(Piece[][] board, PieceColor kingColor) {
+    public static boolean isKingInCheck(Piece[][] board, PieceColor kingColor) {
         // 1. Find the king's position
         int kingX = -1, kingY = -1;
         for (int row = 0; row < 8; row++) {
@@ -545,7 +545,7 @@ private boolean isInsufficientMaterial() {
         }
         return false;
     }
-    private boolean checkMate(PieceColor color, Piece[][] board)
+    private static boolean checkMate(PieceColor color, Piece[][] board)
     {
         for(int row = 0; row < 8; row++)
         {
@@ -556,14 +556,14 @@ private boolean isInsufficientMaterial() {
                 {
                     for(int r = 0; r < 8; r++)
                         for(int c = 0; c <8;c++)
-                            if(piece.isValidMove(c,r,board) && !moveLeavesKingInCheck(row, col,r,c))
+                            if(piece.isValidMove(c,r,board) && !moveLeavesKingInCheck(row, col,r,c, board, color))
                                 return false;
                 }
             }
         }
         return true;
     }
-private boolean staleMate(PieceColor color, Piece[][] board)
+private static boolean staleMate(PieceColor color, Piece[][] board)
 {
     // Rule 1: king must NOT be in check
     if (isKingInCheck(board, color)) return false;
@@ -576,7 +576,7 @@ private boolean staleMate(PieceColor color, Piece[][] board)
                 for (int r = 0; r < 8; r++) {
                     for (int c = 0; c < 8; c++) {
                         if (piece.isValidMove(c, r, board)
-                            && !moveLeavesKingInCheck(row, col, r, c)) {
+                            && !moveLeavesKingInCheck(row, col, r, c, board, color)) {
                             return false; // Found at least one legal move
                         }
                     }
@@ -647,7 +647,7 @@ private boolean staleMate(PieceColor color, Piece[][] board)
         if (targetRow >= 0 && targetRow < 8 &&
                 targetCol >= 0 && targetCol < 8 &&
                 (selectedPiece.isValidMove(targetCol, targetRow, board)) && selectedPiece.getColor() == turnColor
-                && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol)
+                && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol, board, turnColor)
         ) {
             if(selectedPiece instanceof Pawn && ((Pawn) selectedPiece).specialMove == SpecialMove.EN_PASSANT)
             {
@@ -678,25 +678,25 @@ private boolean staleMate(PieceColor color, Piece[][] board)
         this.AI = AI;
     }
 
-    public boolean isValidMove(int targetCol, int targetRow, Piece selectedPiece)
+    public static boolean isValidMove(int targetCol, int targetRow, Piece selectedPiece, GameState gameState)
     {
-        originalRow = selectedPiece.y;
-        originalCol = selectedPiece.x;
+       int originalRow = selectedPiece.y;
+       int originalCol = selectedPiece.x;
         if (targetRow >= 0 && targetRow < 8 &&
                 targetCol >= 0 && targetCol < 8 &&
-                (selectedPiece.isValidMove(targetCol, targetRow, board)) && selectedPiece.getColor() == turnColor
-                && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol)
+                (selectedPiece.isValidMove(targetCol, targetRow,gameState.board)) && selectedPiece.getColor() == gameState.turnColor
+                && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol, gameState.board, gameState.turnColor)
         ) {
             if(selectedPiece instanceof Pawn && ((Pawn) selectedPiece).specialMove == SpecialMove.EN_PASSANT)
             {
 
-                return lastMovedPiece instanceof Pawn && ((Pawn) lastMovedPiece).isLastMoveWasDouble() && lastMovedPiece.y == selectedPiece.y && Math.abs(lastMovedPiece.x - selectedPiece.x) == 1;
+                return gameState.lastMovedPiece instanceof Pawn && ((Pawn) gameState.lastMovedPiece).isLastMoveWasDouble() && gameState.lastMovedPiece.y == selectedPiece.y && Math.abs(gameState.lastMovedPiece.x - selectedPiece.x) == 1;
 
             }
             if (selectedPiece instanceof King) {
                 King king = (King) selectedPiece;
                 if (king.castlingDirection != SpecialMove.NONE) {
-                    return !isKingInCheck(board, turnColor);
+                    return !isKingInCheck(gameState.board, gameState.turnColor);
                 }
             }
             return true;
@@ -705,12 +705,12 @@ private boolean staleMate(PieceColor color, Piece[][] board)
         }
 
     // maybe if needed will refactor this to return the number of available moves instead of if there are any available moves
-    public boolean hasAvailableMove(Piece selectedPiece)
+    public static boolean hasAvailableMove(Piece selectedPiece, GameState gameState)
     {
         int total = 0;
         for(int row = 0; row < 8; row++)
             for(int col = 0; col < 8; col++)
-                total += this.isValidMove(row, col, selectedPiece) ? 1 : 0;
+                total += isValidMove(row, col, selectedPiece, gameState) ? 1 : 0;
         return total != 0;
     }
 public void addAI2(ChessAI AI)
