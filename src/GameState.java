@@ -219,12 +219,16 @@ public GameState(GameState other) {
 
         if(isKingInCheck(board,turnColor) && checkMate(turnColor, board))
         {
+
+            System.out.println(generateFen());
             gameOver = true;
             outcome = (turnColor == PieceColor.WHITE) ? 2 : 1;
         }
 
         else if(halfMoveClock == 50 || staleMate(turnColor, board) || isInsufficientMaterial())
         {
+
+            System.out.println(generateFen());
             gameOver = true;
             outcome = 0;
         }
@@ -234,11 +238,13 @@ public GameState(GameState other) {
 
         if(isKingInCheck(board,turnColor) && checkMate(turnColor, board))
         {
+
             return (turnColor == PieceColor.WHITE) ? 2 : 1;
         }
 
         else if(halfMoveClock == 50 || staleMate(turnColor, board) || isInsufficientMaterial())
         {
+
             return 0;
         }
         return -1;
@@ -473,8 +479,6 @@ public GameState(GameState other) {
             {
                 AIS[index % 2].makeMove();
                 index++;
-                try { Thread.sleep(300); } // optional delay so you can see moves
-                catch (InterruptedException e) { break; }
             }
     }).start();
 
@@ -632,7 +636,6 @@ private static boolean staleMate(PieceColor color, Piece[][] board)
 }
 
     private void handleCastling(SpecialMove castlingType, int kingRow, int kingCol) {
-        System.out.println("Handling castling: " + castlingType + " at (" + kingCol + "," + kingRow + ")");
         int rookCol, rookTargetCol, kingTargetCol;
         if (castlingType == SpecialMove.LEFT_CASTLE) {
             rookCol = 0;
@@ -647,13 +650,10 @@ private static boolean staleMate(PieceColor color, Piece[][] board)
         Piece rook = board[kingRow][rookCol];
         Piece king = board[kingRow][kingCol];
 
-        System.out.println("Rook found at (" + rookCol + "," + kingRow + "): " + (rook != null ? rook.getClass().getSimpleName() : "null"));
         if (rook == null) {
-            System.out.println("ERROR: Rook is null! Castling aborted.");
             return;
         }
         if (!(rook instanceof Rook)) {
-            System.out.println("ERROR: Piece at rook position is not a rook! Castling aborted.");
             return;
         }
         // Move rook
@@ -670,7 +670,6 @@ private static boolean staleMate(PieceColor color, Piece[][] board)
         // The main move logic will handle moving the king to kingTargetCol
         //King move
   
-        System.out.println("Castling completed successfully");
         lastMovedPiece = selectedPiece;
         FlipSides();
     }
@@ -702,7 +701,6 @@ private static boolean staleMate(PieceColor color, Piece[][] board)
 
             if (selectedPiece instanceof King) {
                 King king = (King) selectedPiece;
-                System.out.println(king.castlingDirection);
                 if (king.castlingDirection != SpecialMove.NONE) {
                     return !isKingInCheck(board, turnColor);
 

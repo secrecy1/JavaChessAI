@@ -10,6 +10,7 @@ public Node( GameState gameState, int depth)
 {
     children = new ArrayList<>();
     this.gameState = gameState;
+    this.depth = depth;
     if(depth > 0)
         generateChildNodes();
 }

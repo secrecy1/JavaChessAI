@@ -1,7 +1,87 @@
+public class ChessAI { 
+private GameState gameState;
+PieceColor color = PieceColor.BLACK;
+private static final int[][] PAWN_TABLE = { 
+    { 0,  0,  0,  0,  0,  0,  0,  0},
+    {50, 50, 50, 50, 50, 50, 50, 50},
+    {10, 10, 20, 30, 30, 20, 10, 10},
+    { 5,  5, 10, 25, 25, 10,  5,  5},
+    { 0,  0,  0, 20, 20,  0,  0,  0},
+    { 5, -5,-10,  0,  0,-10, -5,  5},
+    { 5, 10, 10,-20,-20, 10, 10,  5},
+    { 0,  0,  0,  0,  0,  0,  0,  0} 
+};
+private static final int[][] KNIGHT_TABLE = {
+    {-50,-40,-30,-30,-30,-30,-40,-50},
+    {-40,-20,  0,  0,  0,  0,-20,-40},
+    {-30,  0, 10, 15, 15, 10,  0,-30},
+    {-30,  5, 15, 20, 20, 15,  5,-30},
+    {-30,  0, 15, 20, 20, 15,  0,-30},
+    {-30,  5, 10, 15, 15, 10,  5,-30},
+    {-40,-20,  0,  5,  5,  0,-20,-40},
+    {-50,-40,-30,-30,-30,-30,-40,-50}
+};
+private static final int[][] BISHOP_TABLE = {
+    {-20,-10,-10,-10,-10,-10,-10,-20},
+    {-10,  0,  0,  0,  0,  0,  0,-10},
+    {-10,  0,  5, 10, 10,  5,  0,-10},
+    {-10,  5,  5, 10, 10,  5,  5,-10},
+    {-10,  0, 10, 10, 10, 10,  0,-10},
+    {-10, 10, 10, 10, 10, 10, 10,-10},
+    {-10,  5,  0,  0,  0,  0,  5,-10},
+    {-20,-10,-10,-10,-10,-10,-10,-20}
+};
+private static final int[][] ROOK_TABLE = {
+    { 0,  0,  0,  0,  0,  0,  0,  0},
+    { 5, 10, 10, 10, 10, 10, 10,  5},
+    {-5,  0,  0,  0,  0,  0,  0, -5},
+    {-5,  0,  0,  0,  0,  0,  0, -5},
+    {-5,  0,  0,  0,  0,  0,  0, -5},
+    {-5,  0,  0,  0,  0,  0,  0, -5},
+    {-5,  0,  0,  0,  0,  0,  0, -5},
+    { 0,  0,  0,  5,  5,  0,  0,  0}
+};
+private static final int[][] QUEEN_TABLE = {
+    {-20,-10,-10, -5, -5,-10,-10,-20},
+    {-10,  0,  0,  0,  0,  0,  0,-10},
+    {-10,  0,  5,  5,  5,  5,  0,-10},
+    { -5,  0,  5,  5,  5,  5,  0, -5},
+    {  0,  0,  5,  5,  5,  5,  0, -5},
+    {-10,  5,  5,  5,  5,  5,  0,-10},
+    {-10,  0,  5,  0,  0,  0,  0,-10},
+    {-20,-10,-10, -5, -5,-10,-10,-20}
+};
+private static final int[][] KING_TABLE = {
+    {-30,-40,-40,-50,-50,-40,-40,-30},
+    {-30,-40,-40,-50,-50,-40,-40,-30},
+    {-30,-40,-40,-50,-50,-40,-40,-30},
+    {-30,-40,-40,-50,-50,-40,-40,-30},
+    {-20,-30,-30,-40,-40,-30,-30,-20},
+    {-10,-20,-20,-20,-20,-20,-20,-10},
+    { 20, 20,  0,  0,  0,  0, 20, 20},
+    { 20, 30, 10,  0,  0, 10, 30, 20}
+};
+private static final int[][] KING_MIDGAME_TABLE = {
+    {-30,-40,-40,-50,-50,-40,-40,-30},
+    {-30,-40,-40,-50,-50,-40,-40,-30},
+    {-30,-40,-40,-50,-50,-40,-40,-30},
+    {-30,-40,-40,-50,-50,-40,-40,-30},
+    {-20,-30,-30,-40,-40,-30,-30,-20},
+    {-10,-20,-20,-20,-20,-20,-20,-10},
+    { 20, 20,  0,  0,  0,  0, 20, 20},
+    { 20, 30, 10,  0,  0, 10, 30, 20}
+};
+private static final int[][] KING_ENDGAME_TABLE = {
+    {-50,-40,-30,-20,-20,-30,-40,-50},
+    {-30,-20,-10,  0,  0,-10,-20,-30},
+    {-30,-10, 20, 30, 30, 20,-10,-30},
+    {-30,-10, 30, 40, 40, 30,-10,-30},
+    {-30,-10, 30, 40, 40, 30,-10,-30},
+    {-30,-10, 20, 30, 30, 20,-10,-30},
+    {-30,-30,  0,  0,  0,  0,-30,-30},
+    {-50,-30,-30,-30,-30,-30,-30,-50}
+};
 
-public class ChessAI {
-    private GameState gameState;
-    PieceColor color = PieceColor.BLACK;
     public ChessAI(GameState gameState, PieceColor color) 
     {
         this.gameState = gameState;
@@ -9,7 +89,7 @@ public class ChessAI {
     }
     public void makeRandomMove()
     {
-        if(gameState.getOutcome() != -1) return; 
+if(gameState.getOutcome() != -1) return; 
         Piece selectedPiece;
         int selectrow = (int)(Math.random() * 8);
         int selectcol = (int)(Math.random() * 8);
@@ -55,7 +135,7 @@ public class ChessAI {
         gameState.board [promoy][gameState.promotionx] = gameState.promoPiece;
         gameState.promotion = false;
         gameState.FlipSides();
-        }
+    }
     }
     public void makeMove()
     {
@@ -64,7 +144,7 @@ public class ChessAI {
     public void makeMinimaxMove()
     {
 
-        Node root = new Node(this.gameState, 5);
+        Node root = new Node(this.gameState, 3);
         minimax(root, root.depth, color == PieceColor.WHITE);
         Node bestNode = root.children.get(0);
         int bestScore = (color == PieceColor.WHITE) ? (Integer.MIN_VALUE) : Integer.MAX_VALUE;
@@ -87,7 +167,7 @@ public class ChessAI {
     }
 
     private int minimax(Node node, int depth, boolean maxPlayer) {
-        if( depth == 0 || gameState.getGameStatus(gameState.board) != -1) return eval(gameState);
+        if( depth == 0 || gameState.getGameStatus(gameState.board) != -1) return eval(node.gameState);
         if(maxPlayer)
         {
             int maxEval = Integer.MIN_VALUE;
@@ -97,6 +177,7 @@ public class ChessAI {
             child.score = score;
             maxEval = Math.max(maxEval, score);
             }
+            return maxEval;
         }
         else
         {
@@ -108,8 +189,8 @@ public class ChessAI {
             child.score = score;
             minEval = Math.min(minEval, score);
             }
+        return minEval;
         }
-        return -1;
     }
 public int eval(GameState state) {
     int score = 0;
@@ -121,6 +202,7 @@ public int eval(GameState state) {
             Piece p = state.board[row][col];
             if (p == null) continue;
             int value = getPieceValue(p);
+            value += getPositionalBonus(p, row, col);
             score += (p.getColor() == PieceColor.WHITE) ? value : -value;
 
         }
@@ -130,11 +212,22 @@ public int eval(GameState state) {
 }
 
 private int getPieceValue(Piece p) {
-    if (p instanceof Pawn)   return 1;
-    if (p instanceof Knight) return 3;
-    if (p instanceof Bishop) return 3;
-    if (p instanceof Rook)   return 5;
-    if (p instanceof Queen)  return 9;
-    return 0; // King
+    if (p instanceof Pawn)   return 100;
+    if (p instanceof Knight) return 320;
+    if (p instanceof Bishop) return 330;
+    if (p instanceof Rook)   return 500;
+    if (p instanceof Queen)  return 900;
+    return 20000; // King
+}
+private int getPositionalBonus(Piece p, int row, int col) {
+    // tables are from white's perspective, so flip row for black
+    int r = (p.getColor() == PieceColor.WHITE) ? row : 7 - row;
+    if (p instanceof Pawn)   return PAWN_TABLE[r][col];
+    if (p instanceof Knight) return KNIGHT_TABLE[r][col];
+    if (p instanceof Bishop) return BISHOP_TABLE[r][col];
+    if (p instanceof Rook)   return ROOK_TABLE[r][col];
+    if (p instanceof Queen)  return QUEEN_TABLE[r][col];
+    if (p instanceof King)   return KING_TABLE[r][col];
+    return 0;
 }
 }

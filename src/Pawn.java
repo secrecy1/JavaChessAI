@@ -82,7 +82,6 @@ public class Pawn extends Piece {
         } else {
             lastMoveWasDouble = false;
         }
-        System.out.println(newY + " " + PieceColor.WHITE);
         hasMoved = true;
         super.move(newX, newY);
     }
