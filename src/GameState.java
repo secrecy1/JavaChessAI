@@ -628,9 +628,7 @@ private static boolean staleMate(PieceColor color, Piece[][] board)
   
         System.out.println("Castling completed successfully");
         lastMovedPiece = selectedPiece;
-
-        turnColor = (turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
-        backwards = !backwards;
+        FlipSides();
     }
     public void handleEnPassant(int targetCol, int targetRow)
     {
@@ -638,8 +636,9 @@ private static boolean staleMate(PieceColor color, Piece[][] board)
         selectedPiece.move(targetCol, targetRow);
         board[targetRow][targetCol] = selectedPiece;
         board[lastMovedPiece.y][lastMovedPiece.x] = null;
-        turnColor = (turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
-        backwards = !backwards;
+        FlipSides();
+        //turnColor = (turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
+        //backwards = !backwards;
 	
     }
     public boolean isValidMove(int targetCol, int targetRow)
@@ -678,25 +677,25 @@ private static boolean staleMate(PieceColor color, Piece[][] board)
         this.AI = AI;
     }
 
-    public static boolean isValidMove(int targetCol, int targetRow, Piece selectedPiece, GameState gameState)
+    public boolean isValidMove(int targetCol, int targetRow, Piece selectedPiece)
     {
        int originalRow = selectedPiece.y;
        int originalCol = selectedPiece.x;
         if (targetRow >= 0 && targetRow < 8 &&
                 targetCol >= 0 && targetCol < 8 &&
-                (selectedPiece.isValidMove(targetCol, targetRow,gameState.board)) && selectedPiece.getColor() == gameState.turnColor
-                && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol, gameState.board, gameState.turnColor)
+                (selectedPiece.isValidMove(targetCol, targetRow, board)) && selectedPiece.getColor() == turnColor
+                && !moveLeavesKingInCheck(originalRow,originalCol,targetRow,targetCol, board, turnColor)
         ) {
             if(selectedPiece instanceof Pawn && ((Pawn) selectedPiece).specialMove == SpecialMove.EN_PASSANT)
             {
 
-                return gameState.lastMovedPiece instanceof Pawn && ((Pawn) gameState.lastMovedPiece).isLastMoveWasDouble() && gameState.lastMovedPiece.y == selectedPiece.y && Math.abs(gameState.lastMovedPiece.x - selectedPiece.x) == 1;
+                return lastMovedPiece instanceof Pawn && ((Pawn) lastMovedPiece).isLastMoveWasDouble() && lastMovedPiece.y == selectedPiece.y && Math.abs(lastMovedPiece.x - selectedPiece.x) == 1;
 
             }
             if (selectedPiece instanceof King) {
                 King king = (King) selectedPiece;
                 if (king.castlingDirection != SpecialMove.NONE) {
-                    return !isKingInCheck(gameState.board, gameState.turnColor);
+                    return !isKingInCheck(board, turnColor);
                 }
             }
             return true;
@@ -705,12 +704,12 @@ private static boolean staleMate(PieceColor color, Piece[][] board)
         }
 
     // maybe if needed will refactor this to return the number of available moves instead of if there are any available moves
-    public static boolean hasAvailableMove(Piece selectedPiece, GameState gameState)
+    public boolean hasAvailableMove(Piece selectedPiece)
     {
         int total = 0;
         for(int row = 0; row < 8; row++)
             for(int col = 0; col < 8; col++)
-                total += isValidMove(row, col, selectedPiece, gameState) ? 1 : 0;
+                total += isValidMove(row, col, selectedPiece) ? 1 : 0;
         return total != 0;
     }
 public void addAI2(ChessAI AI)
