@@ -1,7 +1,7 @@
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
-
+// TODO: Add a copy constructor
 public class GameState
 {
     public PieceColor turnColor;
