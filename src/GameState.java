@@ -1,7 +1,6 @@
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
-// TODO: Add a copy constructor
 public class GameState
 {
     public PieceColor turnColor;
@@ -762,8 +761,44 @@ public void addAI2(ChessAI AI)
 
 this.AI2 = AI;
 
+}
+public void copy(GameState other)
+{
+
+    this.turnColor = other.turnColor;
+    this.backwards = other.backwards;
+    this.whiteKingsideCastle = other.whiteKingsideCastle;
+    this.whiteQueensideCastle = other.whiteQueensideCastle;
+    this.blackKingsideCastle = other.blackKingsideCastle;
+    this.blackQueensideCastle = other.blackQueensideCastle;
+    this.enPassantTarget = other.enPassantTarget;
+    this.halfMoveClock = other.halfMoveClock;
+    this.fullMoveNumber = other.fullMoveNumber;
+    this.gameOver = other.gameOver;
+    this.outcome = other.outcome;
+    this.promotion = other.promotion;
+    this.promotionx = other.promotionx;
+    this.awaitingPromotion = other.awaitingPromotion;
+    this.playerColor = other.playerColor;
+    this.playingComputer = other.playingComputer;
+    this.twoAIS = other.twoAIS;
+    this.moveFailed = other.moveFailed;
+
+    // deep copy the board
+    this.board = new Piece[8][8];
+    for (int i = 0; i < 8; i++)
+        for (int j = 0; j < 8; j++)
+            if (other.board[i][j] != null)
+                this.board[i][j] = other.board[i][j].copy();
+
+    // copy piece references using the NEW board's pieces, not the original's
+    this.selectedPiece = (other.selectedPiece != null)
+        ? this.board[other.selectedPiece.y][other.selectedPiece.x] : null;
+    this.promoPiece = (other.promoPiece != null)
+        ? this.board[other.promoPiece.y][other.promoPiece.x] : null;
+    this.lastMovedPiece = (other.lastMovedPiece != null)
+        ? this.board[other.lastMovedPiece.y][other.lastMovedPiece.x] : null;
 
 }
-
 
 }

@@ -4,7 +4,8 @@ import java.util.List;
 public class Node {
 public ArrayList<Node> children;
 public GameState gameState;
-private int depth;
+public int depth;
+public int score;
 public Node( GameState gameState, int depth)
 {
     children = new ArrayList<>();
@@ -32,8 +33,7 @@ for(int row = 0; row < 8; row++)
               {
                   int promoy = (copy.turnColor == PieceColor.BLACK) ? 7 : 0;
                             // turnColor has already flipped after makeMove, so flip it back to get the pawn's color
-                            PieceColor pawnColor = (copy.turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
-                            Class[] promoOptions = {Queen.class, Rook.class, Bishop.class, Knight.class};
+                      PieceColor pawnColor = (copy.turnColor);                     Class[] promoOptions = {Queen.class, Rook.class, Bishop.class, Knight.class};
 
                             for (Class promoType : promoOptions) {
                                 GameState promoCopy = new GameState(copy);

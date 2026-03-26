@@ -63,7 +63,26 @@ public class ChessAI {
     }
     public void makeMinimaxMove()
     {
-        Node root = new Node(this.gameState, 3);
+
+        Node root = new Node(this.gameState, 5);
+        minimax(root, root.depth, color == PieceColor.WHITE);
+        Node bestNode = root.children.get(0);
+        int bestScore = (color == PieceColor.WHITE) ? (Integer.MIN_VALUE) : Integer.MAX_VALUE;
+        for(Node children: root.children)
+        {
+            if(color == PieceColor.WHITE && children.score > bestScore)
+            {
+                bestScore = children.score;
+                bestNode = children;
+            }
+            else if(color == PieceColor.BLACK && children.score < bestScore)
+            {
+                bestScore = children.score;
+                bestNode = children;
+            }
+
+        }
+       gameState.copy(bestNode.gameState); 
 
     }
 
@@ -75,6 +94,7 @@ public class ChessAI {
             for(Node child: node.children)
             {
             int score = minimax(child, depth - 1, false);
+            child.score = score;
             maxEval = Math.max(maxEval, score);
             }
         }
@@ -84,6 +104,8 @@ public class ChessAI {
             for(Node child: node.children)
             {
             int score = minimax(child, depth - 1, true);
+
+            child.score = score;
             minEval = Math.min(minEval, score);
             }
         }
@@ -91,14 +113,19 @@ public class ChessAI {
     }
 public int eval(GameState state) {
     int score = 0;
+    int stateOfGame = state.getGameStatus(state.board);
+    if(stateOfGame == 1) return Integer.MIN_VALUE;
+    if(stateOfGame == 2) return Integer.MAX_VALUE;
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
             Piece p = state.board[row][col];
             if (p == null) continue;
             int value = getPieceValue(p);
             score += (p.getColor() == PieceColor.WHITE) ? value : -value;
+
         }
     }
+
     return score;
 }
 
