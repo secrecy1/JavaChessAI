@@ -144,8 +144,8 @@ if(gameState.getOutcome() != -1) return;
     public void makeMinimaxMove()
     {
 
-        Node root = new Node(this.gameState, 3);
-        minimax(root, root.depth, color == PieceColor.WHITE);
+        Node root = new Node(this.gameState, 4);
+        minimax(root, root.depth, color == PieceColor.WHITE, Integer.MIN_VALUE, Integer.MAX_VALUE);
         Node bestNode = root.children.get(0);
         int bestScore = (color == PieceColor.WHITE) ? (Integer.MIN_VALUE) : Integer.MAX_VALUE;
         for(Node children: root.children)
@@ -166,16 +166,19 @@ if(gameState.getOutcome() != -1) return;
 
     }
 
-    private int minimax(Node node, int depth, boolean maxPlayer) {
+    private int minimax(Node node, int depth, boolean maxPlayer, int alpha, int beta) {
         if( depth == 0 || gameState.getGameStatus(gameState.board) != -1) return eval(node.gameState);
         if(maxPlayer)
         {
             int maxEval = Integer.MIN_VALUE;
             for(Node child: node.children)
             {
-            int score = minimax(child, depth - 1, false);
+            int score = minimax(child, depth - 1, false, alpha, beta);
             child.score = score;
             maxEval = Math.max(maxEval, score);
+            alpha = Math.max(alpha, score);
+            if(beta <= alpha)
+                break;
             }
             return maxEval;
         }
@@ -184,10 +187,12 @@ if(gameState.getOutcome() != -1) return;
             int minEval = Integer.MAX_VALUE;
             for(Node child: node.children)
             {
-            int score = minimax(child, depth - 1, true);
-
+            int score = minimax(child, depth - 1, true, alpha, beta);
             child.score = score;
             minEval = Math.min(minEval, score);
+            beta = Math.min(beta, score);
+            if(beta <= alpha)
+                break;
             }
         return minEval;
         }
