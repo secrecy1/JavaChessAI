@@ -3,7 +3,7 @@ import java.util.List;
 
 public class Node {
 public ArrayList<Node> children;
-private GameState gameState;
+public GameState gameState;
 private int depth;
 public Node( GameState gameState, int depth)
 {
@@ -26,9 +26,35 @@ for(int row = 0; row < 8; row++)
          {
              if(gameState.isValidMove(c, r, selectedPiece))
              {
-                 //TODO : make a copy gamestate and pass that in instead of the parent nodes gameState
-              gameState.makeMove(r, c, selectedPiece);
-              children.add(new Node( gameState, depth - 1));
+              GameState copy = new GameState(gameState);
+              copy.makeMove(r, c, copy.board[row][col]);
+              if(copy.promotion)
+              {
+                  int promoy = (copy.turnColor == PieceColor.BLACK) ? 7 : 0;
+                            // turnColor has already flipped after makeMove, so flip it back to get the pawn's color
+                            PieceColor pawnColor = (copy.turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
+                            Class[] promoOptions = {Queen.class, Rook.class, Bishop.class, Knight.class};
+
+                            for (Class promoType : promoOptions) {
+                                GameState promoCopy = new GameState(copy);
+                                Piece promoPiece;
+                                if (promoType == Queen.class)
+                                    promoPiece = new Queen(promoCopy.promotionx, promoy, pawnColor);
+                                else if (promoType == Rook.class)
+                                    promoPiece = new Rook(promoCopy.promotionx, promoy, pawnColor);
+                                else if (promoType == Bishop.class)
+                                    promoPiece = new Bishop(promoCopy.promotionx, promoy, pawnColor);
+                                else
+                                    promoPiece = new Knight(promoCopy.promotionx, promoy, pawnColor);
+                                promoCopy.board[promoy][promoCopy.promotionx] = promoPiece;
+                                promoCopy.promotion = false;
+                                promoCopy.FlipSides();
+                                children.add(new Node(promoCopy, depth - 1));
+                            }
+              }
+              else{
+              children.add(new Node( copy, depth - 1));
+              }
              }
          }
      }

@@ -18,7 +18,6 @@ public class GameState
     public boolean promotion;
     boolean gameOver;
     int outcome;
-    private int lastMoveStartRow, lastMoveStartCol, lastMoveTargetRow, lastMoveTargetCol;
     public boolean awaitingPromotion; 
     private Piece lastMovedPiece;
     public int promotionx;
@@ -37,10 +36,6 @@ public class GameState
         promoPiece = null;
         promotion = false;
         playerColor = PieceColor.WHITE;
-        lastMoveStartRow = -1;
-        lastMoveStartCol = -1;
-        lastMoveTargetRow = -1;
-        lastMoveTargetCol = -1;
         lastMovedPiece = null;
         outcome = -1;
         backwards = false;
@@ -50,6 +45,56 @@ public class GameState
         promotionx = -1;
         this.twoAIS = twoAIS;
     }
+public GameState(GameState other) {
+    // game logic state
+    this.turnColor = other.turnColor;
+    this.backwards = other.backwards;
+    this.whiteKingsideCastle = other.whiteKingsideCastle;
+    this.whiteQueensideCastle = other.whiteQueensideCastle;
+    this.blackKingsideCastle = other.blackKingsideCastle;
+    this.blackQueensideCastle = other.blackQueensideCastle;
+    this.enPassantTarget = other.enPassantTarget;
+    this.halfMoveClock = other.halfMoveClock;
+    this.fullMoveNumber = other.fullMoveNumber;
+    this.gameOver = other.gameOver;
+    this.outcome = other.outcome;
+    this.promotion = other.promotion;
+    this.promotionx = other.promotionx;
+    this.awaitingPromotion = other.awaitingPromotion;
+    this.playerColor = other.playerColor;
+    this.playingComputer = other.playingComputer;
+    this.twoAIS = other.twoAIS;
+    this.moveFailed = other.moveFailed;
+
+    // deep copy the board
+    this.board = new Piece[8][8];
+    for (int i = 0; i < 8; i++)
+        for (int j = 0; j < 8; j++)
+            if (other.board[i][j] != null)
+                this.board[i][j] = other.board[i][j].copy();
+
+    // copy piece references using the NEW board's pieces, not the original's
+    this.selectedPiece = (other.selectedPiece != null)
+        ? this.board[other.selectedPiece.y][other.selectedPiece.x] : null;
+    this.promoPiece = (other.promoPiece != null)
+        ? this.board[other.promoPiece.y][other.promoPiece.x] : null;
+    this.lastMovedPiece = (other.lastMovedPiece != null)
+        ? this.board[other.lastMovedPiece.y][other.lastMovedPiece.x] : null;
+
+    // UI state (neutral defaults — not needed for tree search)
+    this.currentMouseX = 0;
+    this.currentMouseY = 0;
+    this.originalRow = 0;
+    this.originalCol = 0;
+
+    // deliberately skip AI, AI2, AIS — copies should not trigger AI moves
+    this.AI = null;
+    this.AI2 = null;
+    this.AIS = new ChessAI[2];
+    this.index = 0;
+}
+
+
     private void loadFromFEN(String fen)
     {
         //1. board
