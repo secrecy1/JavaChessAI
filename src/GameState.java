@@ -220,7 +220,6 @@ public GameState(GameState other) {
         if(isKingInCheck(board,turnColor) && checkMate(turnColor, board))
         {
 
-            System.out.println(generateFen());
             gameOver = true;
             outcome = (turnColor == PieceColor.WHITE) ? 2 : 1;
         }
@@ -228,7 +227,6 @@ public GameState(GameState other) {
         else if(halfMoveClock == 50 || staleMate(turnColor, board) || isInsufficientMaterial())
         {
 
-            System.out.println(generateFen());
             gameOver = true;
             outcome = 0;
         }
@@ -491,7 +489,14 @@ public GameState(GameState other) {
         checkGameStatus(board);
         if(playingComputer && AI != null && playerColor != turnColor && !twoAIS)
         {
+             new Thread(() -> {
+            /*try {
+                Thread.sleep(50); // small delay so repaint can happen first
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }*/
             AI.makeMove();
+        }).start();
         }
         
         lastMovedPiece = selectedPiece;
@@ -746,13 +751,13 @@ private static boolean staleMate(PieceColor color, Piece[][] board)
         }
 
     // maybe if needed will refactor this to return the number of available moves instead of if there are any available moves
-    public boolean hasAvailableMove(Piece selectedPiece)
+    public int hasAvailableMove(Piece selectedPiece)
     {
         int total = 0;
         for(int row = 0; row < 8; row++)
             for(int col = 0; col < 8; col++)
                 total += isValidMove(row, col, selectedPiece) ? 1 : 0;
-        return total != 0;
+        return total;
     }
 public void addAI2(ChessAI AI)
 {
@@ -797,6 +802,18 @@ public void copy(GameState other)
     this.lastMovedPiece = (other.lastMovedPiece != null)
         ? this.board[other.lastMovedPiece.y][other.lastMovedPiece.x] : null;
 
+}
+public int countPieces()
+{
+    int total = 0;
+    for(int row = 0; row < 8; row++)
+    {
+        for(int col = 0; col < 8; col++)
+        {
+            if(board[row][col] != null) total++;
+        }
+    }
+    return total;
 }
 
 }
