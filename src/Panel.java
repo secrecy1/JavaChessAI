@@ -30,13 +30,13 @@ public class Panel extends JPanel {
         fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         
         //fenString = "4k3/r7/r7/r7/r7/r7/r7/3QK3 w KQkq - 0 1";
-        gameState = new GameState(fenString, true, true);
-        ChessAI AI = new ChessAI(gameState, PieceColor.WHITE);
-        ChessAI AI2 = new ChessAI(gameState, PieceColor.BLACK);
+        gameState = new GameState(fenString, true, false);
+        ChessAI AI = new ChessAI(gameState, PieceColor.BLACK);
+       // ChessAI AI2 = new ChessAI(gameState, PieceColor.BLACK);
         gameState.addAI(AI);
-        gameState.addAI2(AI2);
+  //      gameState.addAI2(AI2);
         gameState.turnColor = PieceColor.WHITE;
-        gameState.startAIBattle();
+ //       gameState.startAIBattle();
         setLayout(null);
 
        // gameOverPanel.setPreferredSize(new Dimension(unitSize*2,unitSize*2));

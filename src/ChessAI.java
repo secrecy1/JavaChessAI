@@ -139,6 +139,8 @@ if(gameState.getOutcome() != -1) return;
     }
     public void makeMove()
     {
+
+if(gameState.getOutcome() != -1) return; 
         makeMinimaxMove();
     }
     public void makeMinimaxMove()
@@ -167,7 +169,7 @@ if(gameState.getOutcome() != -1) return;
     }
 
     private int minimax(Node node, int depth, boolean maxPlayer, int alpha, int beta) {
-        if( depth == 0 || gameState.getGameStatus(gameState.board) != -1) return eval(node.gameState);
+        if( depth == 0 || node.gameState.getGameStatus(gameState.board) != -1) return eval(node.gameState);
         if(maxPlayer)
         {
             int maxEval = Integer.MIN_VALUE;
