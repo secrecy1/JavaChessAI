@@ -4,15 +4,11 @@ import java.util.List;
 public class Node {
 public ArrayList<Node> children;
 public GameState gameState;
-public int depth;
 public int score;
-public Node( GameState gameState, int depth)
+public Node( GameState gameState)
 {
     children = new ArrayList<>();
     this.gameState = gameState;
-    this.depth = depth;
-    if(depth > 0)
-        generateChildNodes();
 }
 public void generateChildNodes()
 {
@@ -50,11 +46,11 @@ for(int row = 0; row < 8; row++)
                                 promoCopy.board[promoy][promoCopy.promotionx] = promoPiece;
                                 promoCopy.promotion = false;
                                 promoCopy.FlipSides();
-                                children.add(new Node(promoCopy, depth - 1));
+                                children.add(new Node(promoCopy));
                             }
               }
               else{
-              children.add(new Node( copy, depth - 1));
+              children.add(new Node(copy));
               }
              }
          }

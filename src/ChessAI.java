@@ -1,6 +1,9 @@
 public class ChessAI { 
 private GameState gameState;
 PieceColor color = PieceColor.BLACK;
+private boolean timeOut = false;
+private long startTime;
+private long timeLimitMs;
 private static final int[][] PAWN_TABLE = { 
     { 0,  0,  0,  0,  0,  0,  0,  0},
     {50, 50, 50, 50, 50, 50, 50, 50},
@@ -94,7 +97,7 @@ if(gameState.getOutcome() != -1) return;
         int selectrow = (int)(Math.random() * 8);
         int selectcol = (int)(Math.random() * 8);
         selectedPiece = gameState.board[selectrow][selectcol];
-        while(selectedPiece == null || selectedPiece.pieceColor != color || !gameState.hasAvailableMove(selectedPiece))
+        while(selectedPiece == null || selectedPiece.pieceColor != color || gameState.hasAvailableMove(selectedPiece) == 0)
         {
             System.out.println("finding valid piece: "+ color + "| " + gameState.turnColor);
             selectrow = (int)(Math.random() * 8);
@@ -145,31 +148,57 @@ if(gameState.getOutcome() != -1) return;
     }
     public void makeMinimaxMove()
     {
+         startTime = System.currentTimeMillis();
+         timeLimitMs = 10000;
+        int maxDepth = 64;
+        timeOut = false;
+        Node bestNodeEver = null;
 
-        Node root = new Node(this.gameState, 4);
-        minimax(root, root.depth, color == PieceColor.WHITE, Integer.MIN_VALUE, Integer.MAX_VALUE);
-        Node bestNode = root.children.get(0);
-        int bestScore = (color == PieceColor.WHITE) ? (Integer.MIN_VALUE) : Integer.MAX_VALUE;
-        for(Node children: root.children)
+        for(int currentDepth = 1; currentDepth < maxDepth; currentDepth++)
         {
-            if(color == PieceColor.WHITE && children.score > bestScore)
-            {
-                bestScore = children.score;
-                bestNode = children;
+
+        Node root = new Node(this.gameState);
+        minimax(root, currentDepth, color == PieceColor.WHITE, Integer.MIN_VALUE, Integer.MAX_VALUE);
+        if (timeOut) {
+            System.out.println("Timed out during depth " + currentDepth + ". Using results from depth " + (currentDepth - 1));
+            break; 
+        }
+        // If we made it here, this depth finished! Update bestNodeEver
+        Node bestNodeForDepth = null;
+        int bestScore = (color == PieceColor.WHITE) ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        
+        for (Node child : root.children) {
+            if (color == PieceColor.WHITE && child.score > bestScore) {
+               bestScore = child.score;
+                bestNodeForDepth = child;
+            } else if (color == PieceColor.BLACK && child.score < bestScore) {
+                bestScore = child.score;
+                bestNodeForDepth = child;
             }
-            else if(color == PieceColor.BLACK && children.score < bestScore)
-            {
-                bestScore = children.score;
-                bestNode = children;
-            }
+        }
+        
+        if (bestNodeForDepth != null) {
+            bestNodeEver = bestNodeForDepth;
+        }
 
         }
-       gameState.copy(bestNode.gameState); 
-
+        if (bestNodeEver != null) {
+        gameState.copy(bestNodeEver.gameState);
+        }
+        else
+        {
+            makeRandomMove();
+            System.out.println("best Node null made random move");
+        }
     }
 
     private int minimax(Node node, int depth, boolean maxPlayer, int alpha, int beta) {
-        if( depth == 0 || node.gameState.getGameStatus(gameState.board) != -1) return eval(node.gameState);
+    if (System.currentTimeMillis() - startTime > timeLimitMs) {
+        timeOut = true;
+    }
+    if (timeOut) return 0;
+        node.generateChildNodes();
+        if( depth == 0 || node.gameState.getOutcome() != -1) return eval(node.gameState);
         if(maxPlayer)
         {
             int maxEval = Integer.MIN_VALUE;
