@@ -208,7 +208,7 @@ if(gameState.getOutcome() != -1) return;
         timeOut = true;
     }
     if (timeOut) return 0;
-        if( depth == 0 || node.gameState.getOutcome() != -1) return eval(node.gameState, depth);
+        if( depth == 0 || node.gameState.getGameStatus(node.gameState.board) != -1) return eval(node.gameState, depth);
         node.generateChildNodes();
         rankChildren(node.children, maxPlayer); 
         if(maxPlayer)
@@ -245,8 +245,8 @@ if(gameState.getOutcome() != -1) return;
 public int eval(GameState state, int depth) {
     int score = 0;
     int stateOfGame = state.getGameStatus(state.board);
-    if(stateOfGame == 1) return Integer.MIN_VALUE + depth;
-    if(stateOfGame == 2) return Integer.MAX_VALUE - depth;
+   if(stateOfGame == 2) return 100000 + depth * 10; 
+    if(stateOfGame == 1) return -100000 - depth * 10;
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
             Piece p = state.board[row][col];
