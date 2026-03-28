@@ -1,4 +1,5 @@
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 public class GameState
@@ -24,7 +25,7 @@ public class GameState
     public PieceColor playerColor;
     public boolean playingComputer;
     public boolean moveFailed;
-    private ChessAI AI;
+    public ChessAI AI;
     private ChessAI AI2;
     public boolean twoAIS;
     private int index = 0;
@@ -34,7 +35,7 @@ public class GameState
         this.playingComputer = playingComputer;
         promoPiece = null;
         promotion = false;
-        playerColor = PieceColor.WHITE;
+        playerColor = PieceColor.BLACK;
         lastMovedPiece = null;
         outcome = -1;
         backwards = false;
@@ -597,6 +598,25 @@ private boolean isInsufficientMaterial() {
             }
         }
         return false;
+    }
+    public ArrayList<Piece> getAgressors(Piece victimPiece)
+    {
+        ArrayList<Piece> agressors = new ArrayList<>();
+
+        PieceColor opponentColor = (victimPiece.pieceColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = board[row][col];
+                if (piece != null && piece.getColor() == opponentColor) {
+                    if (piece.isValidMove(victimPiece.x, victimPiece.y, board)) {
+                        agressors.add(piece);
+                    }
+                }
+            }
+        }
+
+        return agressors;
+
     }
     private static boolean checkMate(PieceColor color, Piece[][] board)
     {

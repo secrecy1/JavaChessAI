@@ -31,11 +31,12 @@ public class Panel extends JPanel {
         
  //       fenString = "4kqq1/8/8/8/8/8/8/2QQK3 w KQkq - 0 1";
         gameState = new GameState(fenString, true, false);
-        ChessAI AI = new ChessAI(gameState, PieceColor.BLACK);
+        ChessAI AI = new ChessAI(gameState, PieceColor.WHITE);
        // ChessAI AI2 = new ChessAI(gameState, PieceColor.BLACK);
         gameState.addAI(AI);
   //      gameState.addAI2(AI2);
         gameState.turnColor = PieceColor.WHITE;
+        gameState.AI.makeMove();
  //       gameState.startAIBattle();
         setLayout(null);
 

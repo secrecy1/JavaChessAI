@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 
 public class ChessAI { 
+
 private GameState gameState;
 PieceColor color = PieceColor.BLACK;
 private boolean timeOut = false;
@@ -160,7 +161,7 @@ if(gameState.getOutcome() != -1) return;
         {
 
         Node root = new Node(this.gameState);
-        minimax(root, currentDepth, color == PieceColor.WHITE, Integer.MIN_VALUE, Integer.MAX_VALUE);
+        root.generateChildNodes();
         if (timeOut) {
             System.out.println("Timed out during depth " + currentDepth + ". Using results from depth " + (currentDepth - 1));
             break; 
@@ -172,7 +173,7 @@ if(gameState.getOutcome() != -1) return;
         int beta = Integer.MAX_VALUE;
  boolean isWhite = color == PieceColor.WHITE;
         for (Node child : root.children) {
-            int score = minimax(child, currentDepth, !isWhite, alpha, beta);
+            int score = minimax(child, currentDepth - 1, !isWhite, alpha, beta);
             if (timeOut) break;
             child.score = score;
             if (color == PieceColor.WHITE && child.score > bestScore) {
@@ -207,8 +208,9 @@ if(gameState.getOutcome() != -1) return;
         timeOut = true;
     }
     if (timeOut) return 0;
-        if( depth == 0 || node.gameState.getOutcome() != -1) return eval(node.gameState);
+        if( depth == 0 || node.gameState.getOutcome() != -1) return eval(node.gameState, depth);
         node.generateChildNodes();
+        rankChildren(node.children, maxPlayer); 
         if(maxPlayer)
         {
             int maxEval = Integer.MIN_VALUE;
@@ -240,11 +242,11 @@ if(gameState.getOutcome() != -1) return;
         return minEval;
         }
     }
-public int eval(GameState state) {
+public int eval(GameState state, int depth) {
     int score = 0;
     int stateOfGame = state.getGameStatus(state.board);
-    if(stateOfGame == 1) return Integer.MIN_VALUE;
-    if(stateOfGame == 2) return Integer.MAX_VALUE;
+    if(stateOfGame == 1) return Integer.MIN_VALUE + depth;
+    if(stateOfGame == 2) return Integer.MAX_VALUE - depth;
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
             Piece p = state.board[row][col];
@@ -288,8 +290,32 @@ children.sort((node1, node2) -> {
         return Integer.compare(score2, score1); 
     });
 }
+// MVV-LVA
 public int guessMoveScore(GameState gameState, boolean isWhiteTurn)
 {
-    return -1;
+    // find victim cycle
+    //
+    int bestScore = 0;
+    for(Piece[] row: gameState.board)
+    {
+        for(Piece col: row)
+        {
+            if(col != null && ((isWhiteTurn && col.pieceColor == PieceColor.BLACK) || (!isWhiteTurn && col.pieceColor == PieceColor.WHITE)))
+            {
+                int victimScore = getPieceValue(col);
+                // look at all the agressors of the victim
+                ArrayList<Piece> agressors = gameState.getAgressors(col);
+                for(Piece pieces : agressors)
+                {
+        
+                    int agressorScore = getPieceValue(pieces);
+                    bestScore = Math.max(bestScore, (victimScore - agressorScore));
+
+                }
+                
+            }
+        }
+    }
+    return bestScore;
 }
 }
