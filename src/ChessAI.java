@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 public class ChessAI { 
 private GameState gameState;
 PieceColor color = PieceColor.BLACK;
@@ -153,7 +155,7 @@ if(gameState.getOutcome() != -1) return;
         int maxDepth = 64;
         timeOut = false;
         Node bestNodeEver = null;
-
+        
         for(int currentDepth = 1; currentDepth < maxDepth; currentDepth++)
         {
 
@@ -166,15 +168,23 @@ if(gameState.getOutcome() != -1) return;
         // If we made it here, this depth finished! Update bestNodeEver
         Node bestNodeForDepth = null;
         int bestScore = (color == PieceColor.WHITE) ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-        
+        int alpha = Integer.MIN_VALUE;
+        int beta = Integer.MAX_VALUE;
+ boolean isWhite = color == PieceColor.WHITE;
         for (Node child : root.children) {
+            int score = minimax(child, currentDepth, !isWhite, alpha, beta);
+            if (timeOut) break;
+            child.score = score;
             if (color == PieceColor.WHITE && child.score > bestScore) {
                bestScore = child.score;
                 bestNodeForDepth = child;
+                alpha = Math.max(alpha, score);
             } else if (color == PieceColor.BLACK && child.score < bestScore) {
                 bestScore = child.score;
                 bestNodeForDepth = child;
+                beta = Math.min(beta, score);
             }
+ if (beta <= alpha) break; // prune remaining siblings (we know this is better than the others no point in evaluating the other nodes
         }
         
         if (bestNodeForDepth != null) {
@@ -197,14 +207,15 @@ if(gameState.getOutcome() != -1) return;
         timeOut = true;
     }
     if (timeOut) return 0;
-        node.generateChildNodes();
         if( depth == 0 || node.gameState.getOutcome() != -1) return eval(node.gameState);
+        node.generateChildNodes();
         if(maxPlayer)
         {
             int maxEval = Integer.MIN_VALUE;
             for(Node child: node.children)
             {
             int score = minimax(child, depth - 1, false, alpha, beta);
+            if (timeOut) return 0;
             child.score = score;
             maxEval = Math.max(maxEval, score);
             alpha = Math.max(alpha, score);
@@ -219,6 +230,7 @@ if(gameState.getOutcome() != -1) return;
             for(Node child: node.children)
             {
             int score = minimax(child, depth - 1, true, alpha, beta);
+            if(timeOut) return 0;
             child.score = score;
             minEval = Math.min(minEval, score);
             beta = Math.min(beta, score);
@@ -265,5 +277,19 @@ private int getPositionalBonus(Piece p, int row, int col) {
     if (p instanceof Queen)  return QUEEN_TABLE[r][col];
     if (p instanceof King)   return KING_TABLE[r][col];
     return 0;
+}
+public void rankChildren(ArrayList<Node> children, boolean isWhiteTurn)
+{
+children.sort((node1, node2) -> {
+        int score1 = guessMoveScore(node1.gameState, isWhiteTurn);
+        int score2 = guessMoveScore(node2.gameState, isWhiteTurn);
+        
+        // We want the HIGHEST scores first (Descending order)
+        return Integer.compare(score2, score1); 
+    });
+}
+public int guessMoveScore(GameState gameState, boolean isWhiteTurn)
+{
+    return -1;
 }
 }
