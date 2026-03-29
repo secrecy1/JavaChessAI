@@ -22,28 +22,35 @@ public class Panel extends JPanel {
     GameState gameState;
     boolean gameOverScreen;
     Thread gameLoop;
-    public Panel() {
+   public Panel(boolean playingComputer, boolean twoAIs, PieceColor playerColor) {
+    // use these to set up gameState instead of hardcoding
+     fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+    gameState = new GameState(fenString, playingComputer, twoAIs);
+    gameState.playerColor = playerColor;
+
+    if (playingComputer) {
+        PieceColor aiColor = (playerColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
+        ChessAI ai = new ChessAI(gameState, aiColor);
+        gameState.addAI(ai);
+        // if AI is white, it moves first
+        if (aiColor == PieceColor.WHITE) {
+            new Thread(() -> gameState.AI.makeMove()).start();
+        }
+    } else if (twoAIs) {
+        ChessAI ai1 = new ChessAI(gameState, PieceColor.WHITE);
+        ChessAI ai2 = new ChessAI(gameState, PieceColor.BLACK);
+        gameState.addAI(ai1);
+        gameState.addAI2(ai2);
+        gameState.startAIBattle();
+    }
 
         GraphicsConfiguration gc = getGraphicsConfiguration();
         scalingFactor = gc != null ? gc.getDefaultTransform().getScaleX() : 1.0;
         setPreferredSize(new Dimension(600, 600));
-        fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        
-   // fenString = "R7/P2k4/5n2/8/2p5/2P5/2P3P1/R1B2KN1 w - - 0 1";
-        gameState = new GameState(fenString, true, false);
-        ChessAI AI = new ChessAI(gameState, PieceColor.WHITE);
-       // ChessAI AI2 = new ChessAI(gameState, PieceColor.BLACK);
-        gameState.addAI(AI);
-  //      gameState.addAI2(AI2);
-        gameState.turnColor = PieceColor.WHITE;
-        gameState.backwards = true;
-        new Thread(() -> {
-        gameState.AI.makeMove();
-        }).start();
- //       gameState.startAIBattle();
+               
         setLayout(null);
 
-       // gameOverPanel.setPreferredSize(new Dimension(unitSize*2,unitSize*2));
 
         bm = new BoardMouseListener();
         addMouseListener(bm);
