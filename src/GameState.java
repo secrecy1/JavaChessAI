@@ -392,8 +392,8 @@ public GameState(GameState other) {
     public void makeMove(int targetRow, int targetCol, Piece selectedPiece)
     {
         if(selectedPiece == null) return;
-        originalCol = selectedPiece.x;
-        originalRow = selectedPiece.y;
+         int originalCol = selectedPiece.x;
+        int  originalRow = selectedPiece.y;
 
         // Validate move using piece's movement rules
         if (targetRow >= 0 && targetRow < 8 &&

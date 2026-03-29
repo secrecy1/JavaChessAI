@@ -29,14 +29,17 @@ public class Panel extends JPanel {
         setPreferredSize(new Dimension(600, 600));
         fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         
- //       fenString = "4kqq1/8/8/8/8/8/8/2QQK3 w KQkq - 0 1";
+   // fenString = "R7/P2k4/5n2/8/2p5/2P5/2P3P1/R1B2KN1 w - - 0 1";
         gameState = new GameState(fenString, true, false);
         ChessAI AI = new ChessAI(gameState, PieceColor.WHITE);
        // ChessAI AI2 = new ChessAI(gameState, PieceColor.BLACK);
         gameState.addAI(AI);
   //      gameState.addAI2(AI2);
         gameState.turnColor = PieceColor.WHITE;
+        gameState.backwards = true;
+        new Thread(() -> {
         gameState.AI.makeMove();
+        }).start();
  //       gameState.startAIBattle();
         setLayout(null);
 

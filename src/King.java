@@ -9,6 +9,7 @@ public class King extends Piece {
 // In King.java - Check basic castling conditions
 @Override
 public boolean isValidMove(int newX, int newY, Piece[][] board) {
+    castlingDirection = SpecialMove.NONE;
     int dx = newX - x;
     int dy = newY - y;
     
