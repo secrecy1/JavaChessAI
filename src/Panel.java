@@ -35,6 +35,7 @@ public class Panel extends JPanel {
         gameState.addAI(ai);
         // if AI is white, it moves first
         if (aiColor == PieceColor.WHITE) {
+            //gameState.backwards = true;
             new Thread(() -> gameState.AI.makeMove()).start();
         }
     } else if (twoAIs) {

@@ -159,7 +159,7 @@ public GameState(GameState other) {
         // 6. Full-Move Number
         fullMoveNumber = Integer.parseInt(fields[5]);
     }
-    private String generateFen()
+    public String generateFen()
     {
         StringBuilder fen = new StringBuilder();
         // 1. Piece Placement

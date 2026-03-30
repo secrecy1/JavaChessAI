@@ -1,3 +1,6 @@
+import java.io.File;
+import java.io.FileWriter;
+import java.io.BufferedWriter;
 import java.util.ArrayList;
 
 public class ChessAI { 
@@ -87,11 +90,17 @@ private static final int[][] KING_ENDGAME_TABLE = {
     {-30,-30,  0,  0,  0,  0,-30,-30},
     {-50,-30,-30,-30,-30,-30,-30,-50}
 };
-
     public ChessAI(GameState gameState, PieceColor color) 
     {
         this.gameState = gameState;
         this.color = color;
+        // empty log file
+ try (FileWriter fw = new FileWriter("Logs.txt", false)) {
+            // Opening with 'false' and immediately closing wipes the file
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
     public void makeRandomMove()
     {
@@ -148,7 +157,17 @@ if(gameState.getOutcome() != -1) return;
 
 if(gameState.getOutcome() != -1) return; 
         makeMinimaxMove();
+
+try (BufferedWriter bw = new BufferedWriter(new FileWriter("Logs.txt", true))) {
+            bw.write(gameState.generateFen());
+            bw.newLine();
+        }
+         catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
+
     public void makeMinimaxMove()
     {
          startTime = System.currentTimeMillis();
