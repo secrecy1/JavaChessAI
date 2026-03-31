@@ -28,10 +28,13 @@ public class GameState
     public ChessAI AI;
     private ChessAI AI2;
     public boolean twoAIS;
-    private int index = 0;
-    private ChessAI[] AIS = new ChessAI[2];
+    private int index;
+    private ChessAI[] AIS;
+    private ArrayList<String> positionHistory;
     public GameState(String fen, boolean playingComputer, boolean twoAIS)
     {
+        positionHistory = new ArrayList<>();
+        AIS = new ChessAI[2];
         this.playingComputer = playingComputer;
         promoPiece = null;
         promotion = false;
@@ -65,6 +68,7 @@ public GameState(GameState other) {
     this.playingComputer = other.playingComputer;
     this.twoAIS = other.twoAIS;
     this.moveFailed = other.moveFailed;
+    this.positionHistory = new ArrayList<>(other.positionHistory);
 
     // deep copy the board
     this.board = new Piece[8][8];
@@ -161,6 +165,7 @@ public GameState(GameState other) {
     }
     public String generateFen()
     {
+        updateCastlingRights();
         StringBuilder fen = new StringBuilder();
         // 1. Piece Placement
         for (int row = 0; row < 8; row++) {
@@ -225,7 +230,7 @@ public GameState(GameState other) {
             outcome = (turnColor == PieceColor.WHITE) ? 2 : 1;
         }
 
-        else if(halfMoveClock == 50 || staleMate(turnColor, board) || isInsufficientMaterial())
+        else if(halfMoveClock == 50 || staleMate(turnColor, board) || isInsufficientMaterial() || isThreefoldRepetition())
         {
 
             gameOver = true;
@@ -241,7 +246,7 @@ public GameState(GameState other) {
             return (turnColor == PieceColor.WHITE) ? 2 : 1;
         }
 
-        else if(halfMoveClock == 50 || staleMate(turnColor, board) || isInsufficientMaterial())
+        else if(halfMoveClock == 50 || staleMate(turnColor, board) || isInsufficientMaterial() || isThreefoldRepetition())
         {
 
             return 0;
@@ -286,6 +291,25 @@ public GameState(GameState other) {
                 // Update current mouse position (scaled coordinates)
 
     }
+    private boolean isThreefoldRepetition() {
+    if(positionHistory.size() < 8) return false; // can't have 3 repetitions in under 8 moves
+    String currentFen = positionHistory.get(positionHistory.size() - 1);
+    // strip move counters — only piece placement + turn + castling + en passant matter
+    String currentPosition = stripCounters(currentFen);
+    int count = 0;
+    for(String fen : positionHistory) {
+        if(stripCounters(fen).equals(currentPosition)) count++;
+        if(count >= 3) return true;
+    }
+    return false;
+}
+
+private String stripCounters(String fen) {
+    // FEN format: "pieces turn castling enpassant halfmove fullmove"
+    // only first 4 fields matter for repetition
+    String[] parts = fen.split(" ");
+    return parts[0] + " " + parts[1] + " " + parts[2] + " " + parts[3];
+}
 
     public void makeMove(int targetRow, int targetCol)
     {
@@ -358,7 +382,32 @@ public GameState(GameState other) {
                 selectedPiece = null;
                 promotion = false;
     }
-
+    public void updateCastlingRights() {
+    // if king has moved, remove both castling rights for that color
+    for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+            Piece p = board[row][col];
+            if (p instanceof King && p.hasMoved) {
+                if (p.getColor() == PieceColor.WHITE) {
+                    whiteKingsideCastle = false;
+                    whiteQueensideCastle = false;
+                } else {
+                    blackKingsideCastle = false;
+                    blackQueensideCastle = false;
+                }
+            }
+            if (p instanceof Rook && p.hasMoved) {
+                if (p.getColor() == PieceColor.WHITE) {
+                    if (p.x == 0) whiteQueensideCastle = false;
+                    if (p.x == 7) whiteKingsideCastle = false;
+                } else {
+                    if (p.x == 0) blackQueensideCastle = false;
+                    if (p.x == 7) blackKingsideCastle = false;
+                }
+            }
+        }
+    }
+}
     private int convertToScaled(int n, double scalingFactor)
     {
         return (int) (n / scalingFactor);
@@ -487,6 +536,7 @@ public GameState(GameState other) {
         promotionx = -1;
         if(!playingComputer) backwards = !backwards;
         turnColor = (turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
+        positionHistory.add(generateFen());
         checkGameStatus(board);
         if(playingComputer && AI != null && playerColor != turnColor && !twoAIS)
         {
@@ -806,6 +856,7 @@ public void copy(GameState other)
     this.playingComputer = other.playingComputer;
     this.twoAIS = other.twoAIS;
     this.moveFailed = other.moveFailed;
+    this.positionHistory = new ArrayList<>(other.positionHistory);
 
     // deep copy the board
     this.board = new Piece[8][8];
