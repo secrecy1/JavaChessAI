@@ -227,7 +227,7 @@ try (BufferedWriter bw = new BufferedWriter(new FileWriter("Logs.txt", true))) {
         timeOut = true;
     }
     if (timeOut) return 0;
-        if( depth == 0 || node.gameState.getGameStatus(node.gameState.board) != -1) return eval(node.gameState, depth);
+        if( depth == 0 || node.gameState.getGameStatus(node.gameState.board) != -1) return quiesce(alpha, beta, node.gameState, depth);
         node.generateChildNodes();
         rankChildren(node.children, maxPlayer); 
         if(maxPlayer)
@@ -336,5 +336,51 @@ public int guessMoveScore(GameState gameState, boolean isWhiteTurn)
         }
     }
     return bestScore;
+}
+public int quiesce( int alpha, int beta, GameState state, int depth) {
+    if (System.currentTimeMillis() - startTime > timeLimitMs) {
+        timeOut = true;
+    }
+    int static_eval = eval(state, depth);
+
+    // Stand Pat
+    int bestValue = static_eval;
+    if( bestValue >= beta )
+        return bestValue;
+    if( bestValue > alpha )
+        alpha = bestValue;
+    for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+            Piece attacker = state.board[row][col];
+            if (attacker == null || attacker.getColor() != state.turnColor) continue;
+
+            // loop every square looking for captures only
+            for (int r = 0; r < 8; r++) {
+                for (int c = 0; c < 8; c++) {
+                    Piece target = state.board[r][c];
+
+                    // ← this is the "every capture" check
+                    // skip if empty square or own piece — not a capture
+                    if (target == null || target.getColor() == state.turnColor) continue;
+                    if (!state.isValidMove(c, r, attacker)) continue;
+
+                    // make the capture on a copy
+                    GameState copy = new GameState(state);
+                    copy.makeMove(r, c, copy.board[row][col]);
+
+                    // negate because opponent's turn next
+                    int score = -quiesce(-beta, -alpha, copy, depth - 1);
+
+                    if (timeOut) return 0;
+
+                    if (score > bestValue) bestValue = score;
+                    if (score >= beta) return bestValue; // beta cutoff
+                    if (score > alpha) alpha = score;
+                }
+            }
+        }
+    }
+
+    return bestValue;
 }
 }

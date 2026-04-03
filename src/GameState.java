@@ -533,11 +533,12 @@ private String stripCounters(String fen) {
     }
     public void FlipSides()
     {
+
+        positionHistory.add(generateFen());
+        checkGameStatus(board);
         promotionx = -1;
         if(!playingComputer) backwards = !backwards;
         turnColor = (turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
-        positionHistory.add(generateFen());
-        checkGameStatus(board);
         if(playingComputer && AI != null && playerColor != turnColor && !twoAIS)
         {
              new Thread(() -> {
