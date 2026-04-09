@@ -170,7 +170,7 @@ try (BufferedWriter bw = new BufferedWriter(new FileWriter("Logs.txt", true))) {
     public void makeMinimaxMove()
     {
          startTime = System.currentTimeMillis();
-         timeLimitMs = 10000;
+         timeLimitMs = 5000;
         int maxDepth = 64;
         timeOut = false;
         Node bestNodeEver = null;
@@ -227,7 +227,7 @@ try (BufferedWriter bw = new BufferedWriter(new FileWriter("Logs.txt", true))) {
         timeOut = true;
     }
     if (timeOut) return 0;
-        if( depth == 0 || node.gameState.getGameStatus(node.gameState.board) != -1) return quiesce(alpha, beta, node.gameState, depth);
+        if( depth == 0 || node.gameState.getGameStatus(node.gameState.board) != -1) return quiesce(alpha, beta, node.gameState, depth, maxPlayer);
         node.generateChildNodes();
         rankChildren(node.children, maxPlayer); 
         if(maxPlayer)
@@ -337,45 +337,60 @@ public int guessMoveScore(GameState gameState, boolean isWhiteTurn)
     }
     return bestScore;
 }
-public int quiesce( int alpha, int beta, GameState state, int depth) {
+public int quiesce(int alpha, int beta, GameState state, int depth, boolean maxPlayer) {
     if (System.currentTimeMillis() - startTime > timeLimitMs) {
         timeOut = true;
+        return 0;
     }
-    int static_eval = eval(state, depth);
 
-    // Stand Pat
-    int bestValue = static_eval;
-    if( bestValue >= beta )
-        return bestValue;
-    if( bestValue > alpha )
-        alpha = bestValue;
-    for (int row = 0; row < 8; row++) {
-        for (int col = 0; col < 8; col++) {
-            Piece attacker = state.board[row][col];
-            if (attacker == null || attacker.getColor() != state.turnColor) continue;
+    int standPat = eval(state, depth);
+    int bestValue = standPat;
 
-            // loop every square looking for captures only
-            for (int r = 0; r < 8; r++) {
-                for (int c = 0; c < 8; c++) {
-                    Piece target = state.board[r][c];
+    if (maxPlayer) {
+        if (standPat >= beta) return standPat;
+        if (standPat > alpha) alpha = standPat;
 
-                    // ← this is the "every capture" check
-                    // skip if empty square or own piece — not a capture
-                    if (target == null || target.getColor() == state.turnColor) continue;
-                    if (!state.isValidMove(c, r, attacker)) continue;
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece target = state.board[row][col];
+                // only enemy pieces are valid capture targets
+                if (target == null || target.getColor() == state.turnColor) continue;
 
-                    // make the capture on a copy
+                ArrayList<Piece> attackers = state.getAgressors(target);
+                for (Piece attacker : attackers) {
                     GameState copy = new GameState(state);
-                    copy.makeMove(r, c, copy.board[row][col]);
+                    copy.makeMove(row, col, copy.board[attacker.y][attacker.x]);
 
-                    // negate because opponent's turn next
-                    int score = -quiesce(-beta, -alpha, copy, depth - 1);
-
+                    int score = quiesce(alpha, beta, copy, depth - 1, false);
                     if (timeOut) return 0;
 
                     if (score > bestValue) bestValue = score;
-                    if (score >= beta) return bestValue; // beta cutoff
+                    if (score >= beta) return bestValue;
                     if (score > alpha) alpha = score;
+                }
+            }
+        }
+    } else {
+        if (standPat <= alpha) return standPat;
+        if (standPat < beta) beta = standPat;
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece target = state.board[row][col];
+                // only enemy pieces are valid capture targets
+                if (target == null || target.getColor() == state.turnColor) continue;
+
+                ArrayList<Piece> attackers = state.getAgressors(target);
+                for (Piece attacker : attackers) {
+                    GameState copy = new GameState(state);
+                    copy.makeMove(row, col, copy.board[attacker.y][attacker.x]);
+
+                    int score = quiesce(alpha, beta, copy, depth - 1, true);
+                    if (timeOut) return 0;
+
+                    if (score < bestValue) bestValue = score;
+                    if (score <= alpha) return bestValue;
+                    if (score < beta) beta = score;
                 }
             }
         }

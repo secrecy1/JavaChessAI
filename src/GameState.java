@@ -68,7 +68,7 @@ public GameState(GameState other) {
     this.playingComputer = other.playingComputer;
     this.twoAIS = other.twoAIS;
     this.moveFailed = other.moveFailed;
-    this.positionHistory = new ArrayList<>(other.positionHistory);
+    this.positionHistory = new ArrayList<>();
 
     // deep copy the board
     this.board = new Piece[8][8];
@@ -534,11 +534,11 @@ private String stripCounters(String fen) {
     public void FlipSides()
     {
 
-        positionHistory.add(generateFen());
-        checkGameStatus(board);
         promotionx = -1;
         if(!playingComputer) backwards = !backwards;
         turnColor = (turnColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
+        positionHistory.add(generateFen());
+        checkGameStatus(board);
         if(playingComputer && AI != null && playerColor != turnColor && !twoAIS)
         {
              new Thread(() -> {
