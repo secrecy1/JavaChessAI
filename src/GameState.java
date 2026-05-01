@@ -30,7 +30,7 @@ public class GameState
     public boolean twoAIS;
     private int index;
     private ChessAI[] AIS;
-    private ArrayList<String> positionHistory;
+    public ArrayList<String> positionHistory;
     public GameState(String fen, boolean playingComputer, boolean twoAIS)
     {
         positionHistory = new ArrayList<>();
@@ -857,7 +857,6 @@ public void copy(GameState other)
     this.playingComputer = other.playingComputer;
     this.twoAIS = other.twoAIS;
     this.moveFailed = other.moveFailed;
-    this.positionHistory = new ArrayList<>(other.positionHistory);
 
     // deep copy the board
     this.board = new Piece[8][8];

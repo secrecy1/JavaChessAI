@@ -194,6 +194,7 @@ try (BufferedWriter bw = new BufferedWriter(new FileWriter("Logs.txt", true))) {
             int score = minimax(child, currentDepth - 1, !isWhite, alpha, beta);
             if (timeOut) break;
             child.score = score;
+System.out.println("depth:" + currentDepth + " score:" + score);
             if (color == PieceColor.WHITE && child.score > bestScore) {
                bestScore = child.score;
                 bestNodeForDepth = child;
@@ -206,14 +207,18 @@ try (BufferedWriter bw = new BufferedWriter(new FileWriter("Logs.txt", true))) {
  if (beta <= alpha) break; // prune remaining siblings (we know this is better than the others no point in evaluating the other nodes
         }
         
-        if (bestNodeForDepth != null) {
+        if (bestNodeForDepth != null && Math.abs(bestNodeForDepth.score) < 100000 ) {
             bestNodeEver = bestNodeForDepth;
         }
 
         }
         if (bestNodeEver != null) {
-        gameState.copy(bestNodeEver.gameState);
-        gameState.checkGameStatus(gameState.board);
+            ArrayList<String> savedHistory = new ArrayList<>(gameState.positionHistory);
+            gameState.copy(bestNodeEver.gameState);
+            gameState.checkGameStatus(gameState.board);
+            gameState.positionHistory = savedHistory;
+            gameState.positionHistory.add(gameState.generateFen());
+            gameState.checkGameStatus(gameState.board);
         }
         else
         {
