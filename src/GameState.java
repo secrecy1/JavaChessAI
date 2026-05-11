@@ -830,6 +830,17 @@ private static boolean staleMate(PieceColor color, Piece[][] board)
                 total += isValidMove(row, col, selectedPiece) ? 1 : 0;
         return total;
     }
+    public int hasAvaiableMoves(PieceColor color)
+    {
+
+        int total = 0;
+        for(int row = 0; row < 8; row++)
+            for(int col = 0; col < 8; col++)
+                total += hasAvailableMove(selectedPiece);
+        return total;
+        
+    }
+
 public void addAI2(ChessAI AI)
 {
 

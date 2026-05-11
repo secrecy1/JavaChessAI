@@ -24,7 +24,6 @@ public class Panel extends JPanel {
    public Panel(boolean playingComputer, boolean twoAIs, PieceColor playerColor) {
     // use these to set up gameState instead of hardcoding
      fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-     fenString = "1Q6/5k2/5ppp/4p3/4B3/4BN2/1P3PPP/3RK2R w KQ - 30 70";
 
     gameState = new GameState(fenString, playingComputer, twoAIs);
     gameState.playerColor = playerColor;

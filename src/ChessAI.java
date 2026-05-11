@@ -207,8 +207,12 @@ System.out.println("depth:" + currentDepth + " score:" + score);
  if (beta <= alpha) break; // prune remaining siblings (we know this is better than the others no point in evaluating the other nodes
         }
         
-        if (bestNodeForDepth != null && Math.abs(bestNodeForDepth.score) < 100000 ) {
-            bestNodeEver = bestNodeForDepth;
+        if (bestNodeForDepth != null && (Math.abs(bestNodeForDepth.score) > 100000) ) {
+          boolean alreadyHaveMate = bestNodeEver != null && 
+                Math.abs(bestNodeEver.score) >= 100000;
+            
+            if (!alreadyHaveMate)
+                bestNodeEver = bestNodeForDepth;
         }
 
         }
