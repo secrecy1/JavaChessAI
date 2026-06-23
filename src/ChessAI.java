@@ -194,7 +194,7 @@ try (BufferedWriter bw = new BufferedWriter(new FileWriter("Logs.txt", true))) {
             int score = minimax(child, currentDepth - 1, !isWhite, alpha, beta);
             if (timeOut) break;
             child.score = score;
-System.out.println("depth:" + currentDepth + " score:" + score);
+System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isWhite );
             if (color == PieceColor.WHITE && child.score > bestScore) {
                bestScore = child.score;
                 bestNodeForDepth = child;
@@ -207,7 +207,7 @@ System.out.println("depth:" + currentDepth + " score:" + score);
  if (beta <= alpha) break; // prune remaining siblings (we know this is better than the others no point in evaluating the other nodes
         }
         
-        if (bestNodeForDepth != null && (Math.abs(bestNodeForDepth.score) > 100000) ) {
+        if (bestNodeForDepth != null) {
           boolean alreadyHaveMate = bestNodeEver != null && 
                 Math.abs(bestNodeEver.score) >= 100000;
             
