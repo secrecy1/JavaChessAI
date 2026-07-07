@@ -300,11 +300,12 @@ private int getPieceValue(Piece p) {
 private int getPositionalBonus(Piece p, int row, int col) {
     // tables are from white's perspective, so flip row for black
     int r = (p.getColor() == PieceColor.WHITE) ? row : 7 - row;
-    if (p instanceof Pawn)   return PAWN_TABLE[r][col];
-    if (p instanceof Knight) return KNIGHT_TABLE[r][col];
-    if (p instanceof Bishop) return BISHOP_TABLE[r][col];
-    if (p instanceof Rook)   return ROOK_TABLE[r][col];
-    if (p instanceof Queen)  return QUEEN_TABLE[r][col];
+    int availmoves = gameState.hasAvailableMove(p);
+    if (p instanceof Pawn)   return PAWN_TABLE[r][col] + availmoves;  
+    if (p instanceof Knight) return KNIGHT_TABLE[r][col] + availmoves * 5;
+    if (p instanceof Bishop) return BISHOP_TABLE[r][col] + availmoves * 3;
+    if (p instanceof Rook)   return ROOK_TABLE[r][col] + availmoves;
+    if (p instanceof Queen)  return QUEEN_TABLE[r][col] + availmoves;
     if (p instanceof King)   return KING_TABLE[r][col];
     return 0;
 }
