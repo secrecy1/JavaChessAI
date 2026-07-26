@@ -275,7 +275,12 @@ public int eval(GameState state, int depth) {
     int stateOfGame = state.getGameStatus(state.board);
    if(stateOfGame == 1) return 100000 + depth * 10; 
     if(stateOfGame == 2) return -100000 - depth * 10;
+// Check for castling
+// TODO: eventually change this for a more robust king safety system isntead of a flat castling check
+if(gameState.whiteKingsideCastle || gameState.whiteQueensideCastle) score+=40;
+if(gameState.blackKingsideCastle || gameState.blackQueensideCastle) score-=40;
     for (int row = 0; row < 8; row++) {
+
         for (int col = 0; col < 8; col++) {
             Piece p = state.board[row][col];
             if (p == null) continue;

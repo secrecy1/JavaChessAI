@@ -732,7 +732,19 @@ private static boolean staleMate(PieceColor color, Piece[][] board)
         if (!(rook instanceof Rook)) {
             return;
         }
+//
+    //boolean whiteKingsideCastle, whiteQueensideCastle, blackKingsideCastle, blackQueensideCastle;
         // Move rook
+        if(board[kingRow][kingCol].pieceColor == PieceColor.WHITE)
+        {
+            if(kingTargetCol == 2) { whiteQueensideCastle = true;}
+            else if(kingTargetCol == 6) whiteKingsideCastle = true;
+        }else
+        {
+            if(kingTargetCol == 2) blackQueensideCastle = true;
+            else if(kingTargetCol == 6) blackKingsideCastle = true;
+        }
+
         board[kingRow][rookCol] = null;
         board[kingRow][rookTargetCol] = rook;
         rook.move(rookTargetCol, kingRow);
