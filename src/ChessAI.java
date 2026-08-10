@@ -69,16 +69,6 @@ private static final int[][] KING_TABLE = {
     { 20, 20,  0,  0,  0,  0, 20, 20},
     { 20, 30, 10,  0,  0, 10, 30, 20}
 };
-private static final int[][] KING_MIDGAME_TABLE = {
-    {-30,-40,-40,-50,-50,-40,-40,-30},
-    {-30,-40,-40,-50,-50,-40,-40,-30},
-    {-30,-40,-40,-50,-50,-40,-40,-30},
-    {-30,-40,-40,-50,-50,-40,-40,-30},
-    {-20,-30,-30,-40,-40,-30,-30,-20},
-    {-10,-20,-20,-20,-20,-20,-20,-10},
-    { 20, 20,  0,  0,  0,  0, 20, 20},
-    { 20, 30, 10,  0,  0, 10, 30, 20}
-};
 private static final int[][] KING_ENDGAME_TABLE = {
     {-50,-40,-30,-20,-20,-30,-40,-50},
     {-30,-20,-10,  0,  0,-10,-20,-30},
@@ -108,7 +98,7 @@ if(gameState.getOutcome() != -1) return;
         int selectrow = (int)(Math.random() * 8);
         int selectcol = (int)(Math.random() * 8);
         selectedPiece = gameState.board[selectrow][selectcol];
-        while(selectedPiece == null || selectedPiece.pieceColor != color || gameState.hasAvailableMove(selectedPiece) == 0)
+        while(selectedPiece == null || selectedPiece.pieceColor != color || gameState.getAvailableMoves(selectedPiece.y, selectedPiece.x) == 0)
         {
             System.out.println("finding valid piece: "+ color + "| " + gameState.turnColor);
             selectrow = (int)(Math.random() * 8);
@@ -208,11 +198,7 @@ System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isW
         }
         
         if (bestNodeForDepth != null) {
-          boolean alreadyHaveMate = bestNodeEver != null && 
-                Math.abs(bestNodeEver.score) >= 100000;
-            
-            if (!alreadyHaveMate)
-                bestNodeEver = bestNodeForDepth;
+            bestNodeEver = bestNodeForDepth;
         }
 
         }
@@ -277,15 +263,15 @@ public int eval(GameState state, int depth) {
     if(stateOfGame == 2) return -100000 - depth * 10;
 // Check for castling
 // TODO: eventually change this for a more robust king safety system isntead of a flat castling check
-if(gameState.whiteKingsideCastle || gameState.whiteQueensideCastle) score+=40;
-if(gameState.blackKingsideCastle || gameState.blackQueensideCastle) score-=40;
+if(state.whiteKingsideCastle || state.whiteQueensideCastle) score+=40;
+if(state.blackKingsideCastle || state.blackQueensideCastle) score-=40;
     for (int row = 0; row < 8; row++) {
 
         for (int col = 0; col < 8; col++) {
             Piece p = state.board[row][col];
             if (p == null) continue;
             int value = getPieceValue(p);
-            value += getPositionalBonus(p, row, col);
+            value += getPositionalBonus(state, p);
             score += (p.getColor() == PieceColor.WHITE) ? value : -value;
 
         }
@@ -302,16 +288,35 @@ private int getPieceValue(Piece p) {
     if (p instanceof Queen)  return 900;
     return 20000; // King
 }
-private int getPositionalBonus(Piece p, int row, int col) {
+private int getPositionalBonus(GameState state, Piece p) {
     // tables are from white's perspective, so flip row for black
+    int row = p.y;
+    int col = p.x;
     int r = (p.getColor() == PieceColor.WHITE) ? row : 7 - row;
-    int availmoves = gameState.hasAvailableMove(p);
+    int availmoves = state.getAvailableMoves(row, col);
     if (p instanceof Pawn)   return PAWN_TABLE[r][col] + availmoves;  
     if (p instanceof Knight) return KNIGHT_TABLE[r][col] + availmoves * 5;
     if (p instanceof Bishop) return BISHOP_TABLE[r][col] + availmoves * 3;
     if (p instanceof Rook)   return ROOK_TABLE[r][col] + availmoves;
     if (p instanceof Queen)  return QUEEN_TABLE[r][col] + availmoves;
-    if (p instanceof King)   return KING_TABLE[r][col];
+    if (p instanceof King){
+        // decide if its end game or not
+        // keeping counts seperate if neeeded later
+        int whiteC = 0;
+        int blackC = 0;
+        // smth abt phase weights
+        for(Piece[] rank : state.board)
+            for(Piece piece : rank)
+            {
+                if(piece == null) continue;
+                if(!(piece instanceof King) && !(piece instanceof Pawn))
+                    if(piece.pieceColor == PieceColor.WHITE) whiteC += getPieceValue(piece);
+                    else blackC += getPieceValue(piece);
+                
+            }
+        if((whiteC + blackC) < 2600) return KING_ENDGAME_TABLE[r][col];
+        else return KING_TABLE[r][col]; 
+        } 
     return 0;
 }
 public void rankChildren(ArrayList<Node> children, boolean isWhiteTurn)
@@ -325,12 +330,12 @@ children.sort((node1, node2) -> {
     });
 }
 // MVV-LVA
-public int guessMoveScore(GameState gameState, boolean isWhiteTurn)
+public int guessMoveScore(GameState state, boolean isWhiteTurn)
 {
     // find victim cycle
     //
     int bestScore = 0;
-    for(Piece[] row: gameState.board)
+    for(Piece[] row: state.board)
     {
         for(Piece col: row)
         {
@@ -338,10 +343,9 @@ public int guessMoveScore(GameState gameState, boolean isWhiteTurn)
             {
                 int victimScore = getPieceValue(col);
                 // look at all the agressors of the victim
-                ArrayList<Piece> agressors = gameState.getAgressors(col);
+                ArrayList<Piece> agressors = state.getAgressors(col);
                 for(Piece pieces : agressors)
                 {
-        
                     int agressorScore = getPieceValue(pieces);
                     bestScore = Math.max(bestScore, (victimScore - agressorScore));
 

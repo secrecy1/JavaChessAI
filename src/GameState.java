@@ -31,6 +31,7 @@ public class GameState
     private int index;
     private ChessAI[] AIS;
     public ArrayList<String> positionHistory;
+    public Integer[][] availMoves;
     public GameState(String fen, boolean playingComputer, boolean twoAIS)
     {
         positionHistory = new ArrayList<>();
@@ -47,6 +48,9 @@ public class GameState
         awaitingPromotion = false;
         promotionx = -1;
         this.twoAIS = twoAIS;
+        availMoves = new Integer[8][8];
+        // initialize the array
+        updateMobility();
     }
 public GameState(GameState other) {
     // game logic state
@@ -69,6 +73,7 @@ public GameState(GameState other) {
     this.twoAIS = other.twoAIS;
     this.moveFailed = other.moveFailed;
     this.positionHistory = new ArrayList<>();
+    this.availMoves = other.availMoves;
 
     // deep copy the board
     this.board = new Piece[8][8];
@@ -381,6 +386,7 @@ private String stripCounters(String fen) {
         }
                 selectedPiece = null;
                 promotion = false;
+                updateMobility();
     }
     public void updateCastlingRights() {
     // if king has moved, remove both castling rights for that color
@@ -511,6 +517,7 @@ private String stripCounters(String fen) {
         }
                 selectedPiece = null;
                 promotion = false;
+                updateMobility();
     }
 
     public static boolean moveLeavesKingInCheck(int startRow, int startCol, int targetRow, int targetCol, Piece[][] board, PieceColor turnColor) {
@@ -834,7 +841,7 @@ private static boolean staleMate(PieceColor color, Piece[][] board)
         }
 
     // maybe if needed will refactor this to return the number of available moves instead of if there are any available moves
-    public int hasAvailableMove(Piece selectedPiece)
+    private int hasAvailableMove(Piece selectedPiece)
     {
         int total = 0;
         for(int row = 0; row < 8; row++)
@@ -880,6 +887,7 @@ public void copy(GameState other)
     this.playingComputer = other.playingComputer;
     this.twoAIS = other.twoAIS;
     this.moveFailed = other.moveFailed;
+    this.availMoves = other.availMoves;
 
     // deep copy the board
     this.board = new Piece[8][8];
@@ -908,6 +916,23 @@ public int countPieces()
         }
     }
     return total;
+}
+private void updateMobility() {
+    for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+            Piece p = board[row][col];
+
+            if (p == null) {
+                availMoves[row][col] = 0;
+            } else {
+                availMoves[row][col] = hasAvailableMove(p);
+            }
+        }
+    }
+}
+public int getAvailableMoves(int row, int col)
+{
+    return availMoves[row][col];
 }
 
 }
