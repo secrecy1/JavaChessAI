@@ -174,7 +174,6 @@ try (BufferedWriter bw = new BufferedWriter(new FileWriter("Logs.txt", true))) {
             System.out.println("Timed out during depth " + currentDepth + ". Using results from depth " + (currentDepth - 1));
             break; 
         }
-        // If we made it here, this depth finished! Update bestNodeEver
         Node bestNodeForDepth = null;
         int bestScore = (color == PieceColor.WHITE) ? Integer.MIN_VALUE : Integer.MAX_VALUE;
         int alpha = Integer.MIN_VALUE;
