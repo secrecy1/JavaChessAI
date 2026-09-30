@@ -9,11 +9,13 @@ PieceColor color = PieceColor.BLACK;
 private boolean timeOut = false;
 private long startTime;
 private long timeLimitMs;
-private boolean minimaxTimedOut = true;
 PRNG prng = new PRNG();
-long Zpieces[2][6][64];
-long castling[16];
-long en_pessant[8];
+//2,6,12
+long Zpieces[][][];
+//16
+long castling[];
+//8
+long en_pessant[];
 long sideToMove;
 private static final int[][] PAWN_TABLE = { 
     { 0,  0,  0,  0,  0,  0,  0,  0},
@@ -187,7 +189,7 @@ try (BufferedWriter bw = new BufferedWriter(new FileWriter("Logs.txt", true))) {
  boolean isWhite = color == PieceColor.WHITE;
         for (Node child : root.children) {
             int score = minimax(child, currentDepth - 1, !isWhite, alpha, beta);
-            if (timeOut || minimaxTimedOut) break;
+            if (timeOut) break;
             child.score = score;
 System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isWhite );
             if (color == PieceColor.WHITE && child.score > bestScore) {
@@ -223,14 +225,12 @@ System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isW
     }
 
     private int minimax(Node node, int depth, boolean maxPlayer, int alpha, int beta) {
-        minimaxTimedOut = false;
     if (System.currentTimeMillis() - startTime > timeLimitMs) {
         timeOut = true;
     }
     // brhjbiraehuireqhiouregerqbjnewfgjhkdvafgjkbvjkgerh
     if (timeOut)
     {
-        minimaxTimedOut = true;
         return 0;
     }
         if( depth == 0 || node.gameState.getGameStatus(node.gameState.board) != -1) return quiesce(alpha, beta, node.gameState, depth, maxPlayer);
@@ -243,7 +243,6 @@ System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isW
             {
             int score = minimax(child, depth - 1, false, alpha, beta);
             if (timeOut){
-                minimaxTimedOut = true;
                 return 0;
             };
             child.score = score;
@@ -262,7 +261,6 @@ System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isW
             int score = minimax(child, depth - 1, true, alpha, beta);
             if(timeOut)
             {
-                minimaxTimedOut = true;
                 return 0;
             }
             child.score = score;
@@ -396,8 +394,9 @@ public int quiesce(int alpha, int beta, GameState state, int depth, boolean maxP
                 ArrayList<Piece> attackers = state.getAgressors(target);
                 for (Piece attacker : attackers) {
                     GameState copy = new GameState(state);
+                    if(copy.isValidMove(row, col, copy.board[attacker.y][attacker.x])) 
                     copy.makeMove(row, col, copy.board[attacker.y][attacker.x]);
-
+                    else continue;
                     int score = quiesce(alpha, beta, copy, depth - 1, false);
                     if (timeOut) return 0;
 
@@ -420,6 +419,7 @@ public int quiesce(int alpha, int beta, GameState state, int depth, boolean maxP
                 ArrayList<Piece> attackers = state.getAgressors(target);
                 for (Piece attacker : attackers) {
                     GameState copy = new GameState(state);
+                    if(copy.isValidMove(row, col, copy.board[attacker.y][attacker.x]))
                     copy.makeMove(row, col, copy.board[attacker.y][attacker.x]);
 
                     int score = quiesce(alpha, beta, copy, depth - 1, true);

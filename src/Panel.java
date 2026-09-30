@@ -342,7 +342,7 @@ public class Panel extends JPanel {
             arcWidth = 15;
             arcHeight = 15;
 
-            g2.setColor(new Color(175, 125, 80));
+            g2.setColor(new Color(175, 125, 80,128));
             //drawing shape where text will be (x,y,width,height,arcWidth,arcHeight)
             g2.fillRoundRect(bannerX,
                     bannerY,
