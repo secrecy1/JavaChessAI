@@ -233,7 +233,7 @@ System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isW
     {
         return 0;
     }
-        if( depth == 0 || node.gameState.getGameStatus(node.gameState.board) != -1) return quiesce(alpha, beta, node.gameState, depth, maxPlayer);
+        if( depth == 0 || node.gameState.getGameStatus(node.gameState.board) != -1) return quiescence(alpha, beta, node.gameState, depth, maxPlayer);
         node.generateChildNodes();
         rankChildren(node.children, maxPlayer); 
         if(maxPlayer)
@@ -372,7 +372,7 @@ public int guessMoveScore(GameState state, boolean isWhiteTurn)
     }
     return bestScore;
 }
-public int quiesce(int alpha, int beta, GameState state, int depth, boolean maxPlayer) {
+public int quiescence(int alpha, int beta, GameState state, int depth, boolean maxPlayer) {
     if (System.currentTimeMillis() - startTime > timeLimitMs) {
         timeOut = true;
         return 0;
@@ -397,7 +397,7 @@ public int quiesce(int alpha, int beta, GameState state, int depth, boolean maxP
                     if(copy.isValidMove(row, col, copy.board[attacker.y][attacker.x])) 
                     copy.makeMove(row, col, copy.board[attacker.y][attacker.x]);
                     else continue;
-                    int score = quiesce(alpha, beta, copy, depth - 1, false);
+                    int score = quiescence(alpha, beta, copy, depth - 1, false);
                     if (timeOut) return 0;
 
                     if (score > bestValue) bestValue = score;
@@ -422,7 +422,7 @@ public int quiesce(int alpha, int beta, GameState state, int depth, boolean maxP
                     if(copy.isValidMove(row, col, copy.board[attacker.y][attacker.x]))
                     copy.makeMove(row, col, copy.board[attacker.y][attacker.x]);
 
-                    int score = quiesce(alpha, beta, copy, depth - 1, true);
+                    int score = quiescence(alpha, beta, copy, depth - 1, true);
                     if (timeOut) return 0;
 
                     if (score < bestValue) bestValue = score;
