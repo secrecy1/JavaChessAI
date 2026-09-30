@@ -9,6 +9,12 @@ PieceColor color = PieceColor.BLACK;
 private boolean timeOut = false;
 private long startTime;
 private long timeLimitMs;
+private boolean minimaxTimedOut = true;
+PRNG prng = new PRNG();
+long Zpieces[2][6][64];
+long castling[16];
+long en_pessant[8];
+long sideToMove;
 private static final int[][] PAWN_TABLE = { 
     { 0,  0,  0,  0,  0,  0,  0,  0},
     {50, 50, 50, 50, 50, 50, 50, 50},
@@ -181,7 +187,7 @@ try (BufferedWriter bw = new BufferedWriter(new FileWriter("Logs.txt", true))) {
  boolean isWhite = color == PieceColor.WHITE;
         for (Node child : root.children) {
             int score = minimax(child, currentDepth - 1, !isWhite, alpha, beta);
-            if (timeOut) break;
+            if (timeOut || minimaxTimedOut) break;
             child.score = score;
 System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isWhite );
             if (color == PieceColor.WHITE && child.score > bestScore) {
@@ -196,7 +202,7 @@ System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isW
  if (beta <= alpha) break; // prune remaining siblings (we know this is better than the others no point in evaluating the other nodes
         }
         
-        if (bestNodeForDepth != null) {
+        if (!timeOut && bestNodeForDepth != null) {
             bestNodeEver = bestNodeForDepth;
         }
 
@@ -217,10 +223,16 @@ System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isW
     }
 
     private int minimax(Node node, int depth, boolean maxPlayer, int alpha, int beta) {
+        minimaxTimedOut = false;
     if (System.currentTimeMillis() - startTime > timeLimitMs) {
         timeOut = true;
     }
-    if (timeOut) return 0;
+    // brhjbiraehuireqhiouregerqbjnewfgjhkdvafgjkbvjkgerh
+    if (timeOut)
+    {
+        minimaxTimedOut = true;
+        return 0;
+    }
         if( depth == 0 || node.gameState.getGameStatus(node.gameState.board) != -1) return quiesce(alpha, beta, node.gameState, depth, maxPlayer);
         node.generateChildNodes();
         rankChildren(node.children, maxPlayer); 
@@ -230,7 +242,10 @@ System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isW
             for(Node child: node.children)
             {
             int score = minimax(child, depth - 1, false, alpha, beta);
-            if (timeOut) return 0;
+            if (timeOut){
+                minimaxTimedOut = true;
+                return 0;
+            };
             child.score = score;
             maxEval = Math.max(maxEval, score);
             alpha = Math.max(alpha, score);
@@ -245,7 +260,11 @@ System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isW
             for(Node child: node.children)
             {
             int score = minimax(child, depth - 1, true, alpha, beta);
-            if(timeOut) return 0;
+            if(timeOut)
+            {
+                minimaxTimedOut = true;
+                return 0;
+            }
             child.score = score;
             minEval = Math.min(minEval, score);
             beta = Math.min(beta, score);
