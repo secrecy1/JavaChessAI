@@ -7,6 +7,7 @@ public int score;
 public Node( GameState gameState)
 {
     children = new ArrayList<>();
+    Node bestChild;
     this.gameState = gameState;
 }
 public void generateChildNodes()
