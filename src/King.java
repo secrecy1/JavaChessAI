@@ -61,7 +61,10 @@ private boolean isBasicCastlingPossible(int newX, int newY, Piece[][] board) {
     }
     public Piece copy()
     {
-        return new King(this.x, this.y, this.pieceColor);
+        
+        King king =  new King(this.x, this.y, this.pieceColor);
+            king.hasMoved = this.hasMoved;
+        return king;
     }
 
 }

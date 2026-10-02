@@ -742,15 +742,18 @@ private static boolean staleMate(PieceColor color, Piece[][] board)
 //
     //boolean whiteKingsideCastle, whiteQueensideCastle, blackKingsideCastle, blackQueensideCastle;
         // Move rook
+        
         if(board[kingRow][kingCol].pieceColor == PieceColor.WHITE)
         {
-            if(kingTargetCol == 2) { whiteQueensideCastle = true;}
-            else if(kingTargetCol == 6) whiteKingsideCastle = true;
+            //NOTE: for some weird reason these were being assinged to true idk why but just to be kept in mind incase smth breaks
+            if(kingTargetCol == 2) { whiteQueensideCastle = false;}
+            else if(kingTargetCol == 6) whiteKingsideCastle = false;
         }else
         {
-            if(kingTargetCol == 2) blackQueensideCastle = true;
-            else if(kingTargetCol == 6) blackKingsideCastle = true;
+            if(kingTargetCol == 2) blackQueensideCastle = false;
+            else if(kingTargetCol == 6) blackKingsideCastle = false;
         }
+        
 
         board[kingRow][rookCol] = null;
         board[kingRow][rookTargetCol] = rook;
