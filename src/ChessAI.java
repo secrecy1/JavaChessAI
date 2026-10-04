@@ -228,7 +228,7 @@ System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isW
     if (System.currentTimeMillis() - startTime > timeLimitMs) {
         timeOut = true;
     }
-    // brhjbiraehuireqhiouregerqbjnewfgjhkdvafgjkbvjkgerh
+    // rewrite to negamax and also rewrite the actual node logic in here also so makeminimax move is just a function call and not a dumb loop
     if (timeOut)
     {
         return 0;
