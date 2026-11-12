@@ -22,6 +22,7 @@ public class Panel extends JPanel {
     boolean gameOverScreen;
     Thread gameLoop;
    public Panel(boolean playingComputer, boolean twoAIs, PieceColor playerColor) {
+    //setBackground(new Color(255,0,0)); 
     // use these to set up gameState instead of hardcoding
      fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 

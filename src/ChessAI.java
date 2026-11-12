@@ -1,6 +1,7 @@
 import java.io.FileWriter;
 import java.io.BufferedWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ChessAI { 
 
@@ -10,14 +11,25 @@ private boolean timeOut = false;
 private long startTime;
 private long timeLimitMs;
 PRNG prng = new PRNG();
-//2,6,12
-long Zpieces[][][];
-//16
+// in centi pawns
+static final int DELTA_PRUNING_MARGIN = 200;
+static final int MAX_QUISCENCE_PLY = 8;
+static final int PIECE_NB = 12;
+static final int SQ_NB = 64;
+static final int FILE_NB = 8;
+static final int CASTLING_RIGHT_NB = 16;
+// zobrist hashing stuff
+long psq[][];
+long enpassant[];
 long castling[];
-//8
-long en_pessant[];
-long sideToMove;
-private static final int[][] PAWN_TABLE = { 
+long turn;
+long hash;
+// use hashmap for transpotional tables omg im acc using hashmaps outside of leetcode this is so exciting
+// use fixed size for effeciency
+HashMap<Long, TTEntry> transpotionTable = new HashMap<>();
+
+
+    private static final int[][] PAWN_TABLE = { 
     { 0,  0,  0,  0,  0,  0,  0,  0},
     {50, 50, 50, 50, 50, 50, 50, 50},
     {10, 10, 20, 30, 30, 20, 10, 10},
@@ -45,8 +57,7 @@ private static final int[][] BISHOP_TABLE = {
     {-10,  0, 10, 10, 10, 10,  0,-10},
     {-10, 10, 10, 10, 10, 10, 10,-10},
     {-10,  5,  0,  0,  0,  0,  5,-10},
-    {-20,-10,-10,-10,-10,-10,-10,-20}
-};
+    {-20,-10,-10,-10,-10,-10,-10,-20} }; 
 private static final int[][] ROOK_TABLE = {
     { 0,  0,  0,  0,  0,  0,  0,  0},
     { 5, 10, 10, 10, 10, 10, 10,  5},
@@ -91,9 +102,10 @@ private static final int[][] KING_ENDGAME_TABLE = {
     {
         this.gameState = gameState;
         this.color = color;
+        intializeZobrist();
         // empty log file
  try (FileWriter fw = new FileWriter("Logs.txt", false)) {
-            // Opening with 'false' and immediately closing wipes the file
+     // opening with append mode false to wipe the file.
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -191,7 +203,7 @@ try (BufferedWriter bw = new BufferedWriter(new FileWriter("Logs.txt", true))) {
             int score = minimax(child, currentDepth - 1, !isWhite, alpha, beta);
             if (timeOut) break;
             child.score = score;
-System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isWhite );
+System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isWhite);
             if (color == PieceColor.WHITE && child.score > bestScore) {
                bestScore = child.score;
                 bestNodeForDepth = child;
@@ -228,13 +240,13 @@ System.out.println("depth:" + currentDepth + " score:" + score + " WHITE: " +isW
     if (System.currentTimeMillis() - startTime > timeLimitMs) {
         timeOut = true;
     }
-    // rewrite to negamax and also rewrite the actual node logic in here also so makeminimax move is just a function call and not a dumb loop
     if (timeOut)
     {
         return 0;
     }
-        if( depth == 0 || node.gameState.getGameStatus(node.gameState.board) != -1) return quiescence(alpha, beta, node.gameState, depth, maxPlayer);
-        node.generateChildNodes();
+        if( depth == 0 || node.gameState.getGameStatus(node.gameState.board) != -1) return quiescence(alpha, beta, node.gameState, depth, maxPlayer, 0);
+
+            node.generateChildNodes();
         rankChildren(node.children, maxPlayer); 
         if(maxPlayer)
         {
@@ -337,12 +349,12 @@ private int getPositionalBonus(GameState state, Piece p) {
 }
 public void rankChildren(ArrayList<Node> children, boolean isWhiteTurn)
 {
-children.sort((node1, node2) -> {
-        int score1 = guessMoveScore(node1.gameState, isWhiteTurn);
-        int score2 = guessMoveScore(node2.gameState, isWhiteTurn);
-        
-        // We want the HIGHEST scores first (Descending order)
-        return Integer.compare(score2, score1); 
+    children.sort((node1, node2) -> {
+    int score1 = guessMoveScore(node1.gameState, isWhiteTurn);
+    int score2 = guessMoveScore(node2.gameState, isWhiteTurn);
+    
+    // We want the HIGHEST scores first (Descending order)
+    return Integer.compare(score2, score1); 
     });
 }
 // MVV-LVA
@@ -372,62 +384,150 @@ public int guessMoveScore(GameState state, boolean isWhiteTurn)
     }
     return bestScore;
 }
-public int quiescence(int alpha, int beta, GameState state, int depth, boolean maxPlayer) {
+
+public int quiescence(int alpha, int beta, GameState state, int depth, boolean maxPlayer, int ply) {
+    // TODO: fix the king loop thing before anything else
+    if(state.getGameStatus(state.board) != -1) return eval(state, depth);
     if (System.currentTimeMillis() - startTime > timeLimitMs) {
         timeOut = true;
         return 0;
     }
+    boolean isKingInCheck = GameState.isKingInCheck(state.board, state.turnColor);
+    
+    if(ply >= MAX_QUISCENCE_PLY)  
+    {
+        if(!isKingInCheck)
+        return eval(state, depth);
+        int score = (maxPlayer) ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        for(int row = 0; row < 8; row++)
+        {
+            for(int col = 0; col <  8; col++)
+            {   Piece p = state.board[row][col];
+                if(p == null || p.getColor() != state.turnColor) continue;
+                for(int r = 0; r < 8; r++)
+                {
+                    for(int c = 0; c < 8; c++)
+                    {
+                        GameState copy = new GameState(state);
+                        if(!copy.isValidMove(r, c, p)) continue;
+                        copy.makeMove(r, c, p);
+                        score = (maxPlayer) ? Math.max(score, eval(copy, depth)) : Math.min(score, eval(copy, depth));
+                        if (timeOut) return 0;
+                    }
 
+                }   
+            }
+        }
+        return score;
+    }
     int standPat = eval(state, depth);
-    int bestValue = standPat;
-
+    int bestValue = isKingInCheck
+    ? (maxPlayer ? Integer.MIN_VALUE : Integer.MAX_VALUE)
+    : standPat;
     if (maxPlayer) {
-        if (standPat >= beta) return standPat;
-        if (standPat > alpha) alpha = standPat;
+
+        if(!isKingInCheck)
+        {
+            if (standPat >= beta) return standPat;
+            if (standPat > alpha) alpha = standPat;
+        }
 
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 Piece target = state.board[row][col];
                 // only enemy pieces are valid capture targets
-                if (target == null || target.getColor() == state.turnColor) continue;
+                if (!isKingInCheck && (target == null || target.getColor() == state.turnColor)) continue;
+                else if(isKingInCheck)
+                {
+                    // check all the evasive moves which are all the valid moves in this case
+                    if(target == null || target.getColor() != state.turnColor) continue;
+                    for(int r = 0; r < 8; r++)
+                        for(int c = 0; c < 8; c++)
+                        {
+                            GameState copy = new GameState(state);
+                            if(!copy.isValidMove(r, c, target)) continue;
 
+                            copy.makeMove(r, c, target);
+                            int score = quiescence(alpha, beta, copy, depth - 1, false, ply + 1);
+                            if (timeOut) return 0;
+                            if (score > bestValue) bestValue = score;
+                            if (score >= beta) return bestValue;
+                            if (score > alpha) alpha = score;
+                        }
+
+                }
+                else
+                {
+                if(standPat + getPieceValue(target) + DELTA_PRUNING_MARGIN < alpha) continue;
                 ArrayList<Piece> attackers = state.getAgressors(target);
                 for (Piece attacker : attackers) {
                     GameState copy = new GameState(state);
-                    if(copy.isValidMove(row, col, copy.board[attacker.y][attacker.x])) 
+                    if(!(copy.isValidMove(row, col, copy.board[attacker.y][attacker.x]))) continue;
                     copy.makeMove(row, col, copy.board[attacker.y][attacker.x]);
-                    else continue;
-                    int score = quiescence(alpha, beta, copy, depth - 1, false);
+                    int score = quiescence(alpha, beta, copy, depth - 1, false, ply + 1);
                     if (timeOut) return 0;
-
+                    
                     if (score > bestValue) bestValue = score;
                     if (score >= beta) return bestValue;
                     if (score > alpha) alpha = score;
                 }
+                }
             }
         }
     } else {
+        if(!isKingInCheck)
+        {
         if (standPat <= alpha) return standPat;
         if (standPat < beta) beta = standPat;
+        }
 
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 Piece target = state.board[row][col];
                 // only enemy pieces are valid capture targets
-                if (target == null || target.getColor() == state.turnColor) continue;
+                if (!isKingInCheck && (target == null || target.getColor() == state.turnColor)) continue;
+                else if(isKingInCheck)
+                {
+                    // check all the evasive moves which are all the valid moves in this case
+                    if(target == null || target.getColor() != state.turnColor) continue;
+                    for(int r = 0; r < 8; r++)
+                        for(int c = 0; c < 8; c++)
+                        {
+                            GameState copy = new GameState(state);
+                            if(!copy.isValidMove(r, c, target)) continue;
+                            copy.makeMove(r, c, target);
+                            int score = quiescence(alpha, beta, copy, depth - 1, true, ply + 1);
+                            if (timeOut) return 0;
+                            if (score < bestValue) bestValue = score;
+                            if (score <= alpha) return bestValue;
+                            if (score < beta) beta = score;
+                        }
 
+                }
+                else
+                {
+                if (standPat - getPieceValue(target) - DELTA_PRUNING_MARGIN > beta) continue;
                 ArrayList<Piece> attackers = state.getAgressors(target);
                 for (Piece attacker : attackers) {
                     GameState copy = new GameState(state);
-                    if(copy.isValidMove(row, col, copy.board[attacker.y][attacker.x]))
+                    // diagnostic
+Piece attackerCopy = copy.board[attacker.y][attacker.x];
+if (attackerCopy == null) {
+    System.out.println("NULL CLONE");
+    System.out.println("Attacker: " + attacker.getClass().getSimpleName());
+    System.out.println("Coordinates: " + attacker.x + ", " + attacker.y);
+    continue;
+}
+                    if(!(copy.isValidMove(row, col, copy.board[attacker.y][attacker.x]))) continue;
                     copy.makeMove(row, col, copy.board[attacker.y][attacker.x]);
 
-                    int score = quiescence(alpha, beta, copy, depth - 1, true);
+                    int score = quiescence(alpha, beta, copy, depth - 1, true, ply + 1);
                     if (timeOut) return 0;
 
                     if (score < bestValue) bestValue = score;
                     if (score <= alpha) return bestValue;
                     if (score < beta) beta = score;
+                }
                 }
             }
         }
@@ -435,4 +535,72 @@ public int quiescence(int alpha, int beta, GameState state, int depth, boolean m
 
     return bestValue;
 }
+private void intializeZobrist()
+{
+    hash = 0;
+    psq = new long[PIECE_NB][SQ_NB];
+    for(int i = 0; i < PIECE_NB; i++)
+    {
+        for(int j = 0; j < SQ_NB; j++)
+        {
+            psq[i][j] = prng.getRandomNumber();
+            hash ^= psq[i][j];
+        }
+    }
+    enpassant = new long[FILE_NB];
+    for(int i = 0; i < FILE_NB; i++)
+    {
+        enpassant[i] = prng.getRandomNumber();
+        hash ^= enpassant[i];
+    }
+    castling = new long[CASTLING_RIGHT_NB];
+    for(int i = 0; i < CASTLING_RIGHT_NB; i++)
+    {
+        castling[i] = prng.getRandomNumber();
+        hash ^= castling[i];
+    }
+    turn = prng.getRandomNumber();
+    
 }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
